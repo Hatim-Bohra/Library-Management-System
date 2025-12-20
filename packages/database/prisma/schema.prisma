@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(MEMBER)
+  firstName String
+  lastName  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  loans        Loan[]
+  reservations Reservation[]
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+model Book {
+  id          String   @id @default(uuid())
+  title       String
+  isbn        String   @unique
+  publishedYear Int
+  copies      Int      @default(1)
+  
+  authorId    String
+  author      Author   @relation(fields: [authorId], references: [id])
+  
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+
+  loans        Loan[]
+  reservations Reservation[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Author {
+  id    String @id @default(uuid())
+  name  String
+  bio   String?
+  books Book[]
+}
+
+model Category {
+  id          String @id @default(uuid())
+  name        String @unique
+  description String?
+  books       Book[]
+}
+
+model Loan {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  bookId     String
+  book       Book      @relation(fields: [bookId], references: [id])
+  
+  borrowedAt DateTime  @default(now())
+  dueDate    DateTime
+  returnedAt DateTime?
+  
+  status     LoanStatus @default(ACTIVE)
+  fines      Fine[]
+}
+
+enum LoanStatus {
+  ACTIVE
+  RETURNED
+  OVERDUE
+}
+
+model Reservation {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  bookId    String
+  book      Book     @relation(fields: [bookId], references: [id])
+  status    ReservationStatus @default(PENDING)
+  createdAt DateTime @default(now())
+}
+
+enum ReservationStatus {
+  PENDING
+  FULFILLED
+  CANCELLED
+}
+
+model Fine {
+  id        String   @id @default(uuid())
+  loanId    String
+  loan      Loan     @relation(fields: [loanId], references: [id])
+  amount    Decimal
+  paid      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
