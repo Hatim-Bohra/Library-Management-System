@@ -21,6 +21,7 @@ model User {
 
   loans        Loan[]
   reservations Reservation[]
+  auditLogs    AuditLog[]
 }
 
 enum Role {
@@ -35,6 +36,8 @@ model Book {
   isbn        String   @unique
   publishedYear Int
   copies      Int      @default(1)
+  isAvailable Boolean  @default(true)
+  description String?
   
   authorId    String
   author      Author   @relation(fields: [authorId], references: [id])
@@ -107,4 +110,15 @@ model Fine {
   amount    Decimal
   paid      Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String
+  entityId    String
+  entityType  String
+  performedBy String
+  user        User     @relation(fields: [performedBy], references: [id])
+  details     Json?
+  createdAt   DateTime @default(now())
 }

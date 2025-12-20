@@ -1,41 +1,98 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { CreateBookDto } from './dto/create-book.dto';
-import { UpdateBookDto } from './dto/update-book.dto';
+import { CreateBookDto, UpdateBookDto } from './dto';
+import { Book } from '@prisma/client';
 
 @Injectable()
 export class BooksService {
     constructor(private prisma: PrismaService) { }
 
-    async create(createBookDto: CreateBookDto) {
-        return this.prisma.book.create({
-            data: createBookDto,
+    async create(dto: CreateBookDto): Promise<Book> {
+        const book = await this.prisma.book.create({
+            data: {
+                ...dto,
+            },
         });
+        await this.checkAvailability(book.id);
+        return book;
     }
 
-    async findAll() {
+    async findAll(query: string = ''): Promise<Book[]> {
         return this.prisma.book.findMany({
-            include: { author: true, category: true },
+            where: {
+                OR: [
+                    { title: { contains: query, mode: 'insensitive' } },
+                    { isbn: { contains: query, mode: 'insensitive' } },
+                ],
+            },
+            include: {
+                author: true,
+                category: true,
+            },
         });
     }
 
-    async findOne(id: string) {
-        return this.prisma.book.findUniqueOrThrow({
+    async findOne(id: string): Promise<Book> {
+        const book = await this.prisma.book.findUnique({
             where: { id },
-            include: { author: true, category: true },
+            include: {
+                author: true,
+                category: true,
+            },
+        });
+        if (!book) throw new NotFoundException(`Book with ID ${id} not found`);
+        return book;
+    }
+
+    async update(id: string, dto: UpdateBookDto, userId: string): Promise<Book> {
+        const oldBook = await this.findOne(id);
+
+        const updatedBook = await this.prisma.book.update({
+            where: { id },
+            data: {
+                ...dto,
+            },
+        });
+
+        // Auto-disable logic check
+        await this.checkAvailability(id);
+
+        // Audit Log for Manual Override of Availability
+        if (dto.isAvailable !== undefined && dto.isAvailable !== oldBook.isAvailable) {
+            await this.prisma.auditLog.create({
+                data: {
+                    action: 'BOOK_OVERRIDE',
+                    entityId: id,
+                    entityType: 'Book',
+                    performedBy: userId,
+                    details: {
+                        field: 'isAvailable',
+                        oldValue: oldBook.isAvailable,
+                        newValue: dto.isAvailable,
+                        reason: 'Manual Override',
+                    },
+                },
+            });
+        }
+
+        return updatedBook;
+    }
+
+    async remove(id: string): Promise<void> {
+        await this.prisma.book.delete({
+            where: { id },
         });
     }
 
-    async update(id: string, updateBookDto: UpdateBookDto) {
-        return this.prisma.book.update({
-            where: { id },
-            data: updateBookDto,
-        });
-    }
+    async checkAvailability(bookId: string) {
+        const book = await this.prisma.book.findUnique({ where: { id: bookId } });
+        if (!book) return;
 
-    async remove(id: string) {
-        return this.prisma.book.delete({
-            where: { id },
-        });
+        if (book.copies === 0 && book.isAvailable) {
+            await this.prisma.book.update({
+                where: { id: bookId },
+                data: { isAvailable: false },
+            });
+        }
     }
 }

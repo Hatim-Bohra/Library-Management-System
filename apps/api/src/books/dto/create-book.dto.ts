@@ -1,32 +1,39 @@
-import { IsString, IsNotEmpty, IsInt, Min, IsUUID } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateBookDto {
-    @ApiProperty({ example: 'The Great Gatsby' })
+    @ApiProperty()
     @IsString()
     @IsNotEmpty()
     title!: string;
 
-    @ApiProperty({ example: '978-0743273565' })
+    @ApiProperty()
     @IsString()
     @IsNotEmpty()
     isbn!: string;
 
-    @ApiProperty({ example: 1925 })
+    @ApiProperty()
     @IsInt()
     @Min(1000)
     publishedYear!: number;
 
-    @ApiProperty({ example: 5 })
+    @ApiProperty({ default: 1 })
     @IsInt()
-    @Min(1)
+    @Min(0)
     copies!: number;
 
-    @ApiProperty({ example: 'uuid-author-id' })
-    @IsUUID()
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    description?: string;
+
+    @ApiProperty()
+    @IsString()
+    @IsNotEmpty()
     authorId!: string;
 
-    @ApiProperty({ example: 'uuid-category-id' })
-    @IsUUID()
+    @ApiProperty()
+    @IsString()
+    @IsNotEmpty()
     categoryId!: string;
 }
