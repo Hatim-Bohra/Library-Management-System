@@ -1,17 +1,17 @@
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors();
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()
-    .setTitle('Library Management System API')
-    .setDescription('The LMS API description')
+    .setTitle('Library Management API')
+    .setDescription('The library management system API description')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
