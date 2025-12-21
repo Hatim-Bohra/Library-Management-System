@@ -40,13 +40,14 @@ export default function LoginPage() {
 
     const mutation = useMutation({
         mutationFn: login, // API call
-        onSuccess: (data) => { // API returns { accessToken, refreshToken, user }
-            authLogin(data.accessToken, data.refreshToken);
+        onSuccess: (data) => { // API returns { access_token, refresh_token }
+            authLogin(data.access_token, data.refresh_token);
             // Provider handles redirect
         },
-        onError: (error) => {
-            console.error(error);
-            alert('Login failed');
+        onError: (error: any) => {
+            console.error('Login error:', error);
+            const message = error.response?.data?.message || error.message || 'Login failed';
+            alert(`Login failed: ${message}`);
         }
     });
 

@@ -24,9 +24,11 @@ services:
     restart: always
     environment:
       DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-lms}?schema=public
-      JWT_SECRET: ${JWT_SECRET:-supersecret}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-supersecret}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-supersecretrefresh}
       PORT: 3002
+    command: >
+      sh -c "npx prisma db push --schema=packages/database/prisma/schema.prisma && node apps/api/dist/main"
     ports:
       - "3001:3002"
     depends_on:

@@ -13,6 +13,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 
+import { BookDialog } from '@/components/books/book-dialog';
+
 export default function AdminBooksPage() {
     const { data: books, isLoading } = useQuery({
         queryKey: ['admin-books'],
@@ -28,9 +30,7 @@ export default function AdminBooksPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold tracking-tight">Manage Books</h2>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" /> Add Book
-                </Button>
+                <BookDialog />
             </div>
 
             <div className="rounded-md border">

@@ -44,9 +44,10 @@ export default function RegisterPage() {
         onSuccess: () => {
             router.push('/login');
         },
-        onError: (error) => {
+        onError: (error: any) => {
             console.error(error);
-            alert('Registration failed');
+            const message = error.response?.data?.message || error.message || 'Registration failed';
+            alert(`Registration failed: ${message}`);
         }
     });
 

@@ -102,10 +102,10 @@ export class RequestsService {
   }
 
   async approve(id: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+     
     const request = (await this.prisma.bookRequest.findUnique({
       where: { id },
-    })) as BookRequest | null;
+    }));
 
     if (!request) throw new NotFoundException('Request not found');
     if (request.status !== BookRequestStatus.PENDING) {

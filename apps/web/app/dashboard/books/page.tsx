@@ -21,9 +21,6 @@ export default function BooksPage() {
         }
     });
 
-    if (isLoading) return <div>Loading books...</div>;
-    if (error) return <div>Error loading books: {(error as any).message}</div>;
-
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -37,12 +34,20 @@ export default function BooksPage() {
                 </div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {books?.map((book: any) => (
-                    <BookCard key={book.id} book={book} />
-                ))}
-            </div>
-            {books?.length === 0 && <p className="text-muted-foreground">No books found.</p>}
+            {isLoading ? (
+                <div>Loading books...</div>
+            ) : error ? (
+                <div>Error loading books: {(error as any).message}</div>
+            ) : (
+                <>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {books?.map((book: any) => (
+                            <BookCard key={book.id} book={book} />
+                        ))}
+                    </div>
+                    {books?.length === 0 && <p className="text-muted-foreground">No books found.</p>}
+                </>
+            )}
         </div>
     );
 }

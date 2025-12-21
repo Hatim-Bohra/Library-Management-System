@@ -13,7 +13,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private config: ConfigService,
-  ) {}
+  ) { }
 
   async signupLocal(dto: CreateUserDto): Promise<Tokens> {
     const hash = await this.hashData(dto.password);
@@ -27,14 +27,6 @@ export class AuthService {
           lastName: dto.lastName,
           role: 'ADMIN', // Defaulting to ADMIN for now for testing, or MEMBER
         },
-      })
-      .catch((error) => {
-        if (error instanceof PrismaClientKnownRequestError) {
-          if (error.code === 'P2002') {
-            throw new ForbiddenException('Credentials taken');
-          }
-        }
-        throw error;
       });
 
     const tokens = await this.getTokens(
@@ -53,10 +45,14 @@ export class AuthService {
       },
     });
 
-    if (!user) throw new ForbiddenException('Access Denied');
+    if (!user) {
+      throw new ForbiddenException('Access Denied');
+    }
 
     const passwordMatches = await bcrypt.compare(dto.password, user.password);
-    if (!passwordMatches) throw new ForbiddenException('Access Denied');
+    if (!passwordMatches) {
+      throw new ForbiddenException('Access Denied');
+    }
 
     const tokens = await this.getTokens(user.id, user.email, user.role);
     await this.updateRtHash(user.id, tokens.refresh_token);

@@ -14,15 +14,20 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const status =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message: string | object = 'Internal Server Error';
 
-    const message =
-      exception instanceof HttpException
-        ? exception.getResponse()
-        : 'Internal Server Error';
+    if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      message = exception.getResponse();
+    } else if (
+      // Check for Prisma Error Code P2002 via duck typing or loose check
+      // to avoid instanceof issues in some monorepo/dockered setups
+      (exception as any).code === 'P2002'
+    ) {
+      status = HttpStatus.CONFLICT;
+      message = 'Unique constraint violation (e.g., email already exists)';
+    }
 
     // Normalize message if it's an object (e.g. standard validation error)
     const errorResponse =
