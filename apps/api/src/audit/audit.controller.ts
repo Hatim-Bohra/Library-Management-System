@@ -1,19 +1,19 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { AuditService } from './audit.service';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@repo/database';
-import { Roles } from '../auth/decorators';
-import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('Audit')
 @Controller('audit')
 export class AuditController {
     constructor(private readonly auditService: AuditService) { }
 
-    @Roles(Role.ADMIN)
-    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Get audit logs' })
+    @ApiResponse({ status: 200, description: 'List of audit logs.' })
     @Get()
-    @ApiOperation({ summary: 'Get audit logs (Admin)' })
-    findAll(@Query('skip') skip?: number, @Query('take') take?: number) {
-        return this.auditService.findAll(Number(skip || 0), Number(take || 50));
+    @Roles(Role.ADMIN)
+    findAll() {
+        return this.auditService.findAll();
     }
 }

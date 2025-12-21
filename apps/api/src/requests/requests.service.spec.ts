@@ -5,10 +5,7 @@ import { FinesService } from '../fines/fines.service';
 import { BookRequestStatus, BookRequestType, FineRule, Role } from '@repo/database';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 
-const mockPrismaService = {
-    book: {
-        findUnique: jest.fn(),
-    },
+const mockTransactions = {
     inventoryItem: {
         findFirst: jest.fn(),
         count: jest.fn(),
@@ -18,14 +15,22 @@ const mockPrismaService = {
         create: jest.fn(),
         findMany: jest.fn(),
         findUnique: jest.fn(),
+        findFirst: jest.fn(),
         update: jest.fn(),
-        count: jest.fn(), // Added count mock
+        count: jest.fn(),
+    },
+    book: {
+        findUnique: jest.fn(),
     },
     loan: {
         create: jest.fn(),
         update: jest.fn(),
-    },
-    $transaction: jest.fn((cb) => cb(mockPrismaService)),
+    }
+};
+
+const mockPrismaService = {
+    ...mockTransactions,
+    $transaction: jest.fn((cb) => cb(mockTransactions)),
 };
 
 const mockFinesService = {
@@ -69,19 +74,32 @@ describe('RequestsService', () => {
             const userId = 'user-1';
             const dto = { bookId, type: BookRequestType.PICKUP, address: 'Req Address' };
 
-            mockPrismaService.book.findUnique.mockResolvedValue({ id: bookId, isAvailable: true });
-            mockPrismaService.inventoryItem.count.mockResolvedValue(1); // 1 copy available
-            mockPrismaService.bookRequest.findFirst.mockResolvedValue(null); // No existing request
-            mockPrismaService.bookRequest.create.mockResolvedValue({ id: 'req-1', ...dto, status: BookRequestStatus.PENDING });
+            mockTransactions.book.findUnique.mockResolvedValue({ id: bookId });
+            mockTransactions.inventoryItem.count.mockResolvedValue(1); // 1 copy available - This is CRITICAL
+            mockTransactions.bookRequest.findFirst.mockResolvedValue(null); // No existing request
+
+            // Mock created return
+            const createdRequest = { id: 'req-1', ...dto, status: BookRequestStatus.PENDING, createdAt: new Date() };
+            mockTransactions.bookRequest.create.mockResolvedValue(createdRequest);
 
             const result = await service.create(userId, dto);
 
-            expect(prisma.bookRequest.create).toHaveBeenCalled();
-            expect(result).toEqual(expect.objectContaining({ id: 'req-1', status: BookRequestStatus.PENDING }));
+            // Assertions
+            expect(mockTransactions.inventoryItem.count).toHaveBeenCalled();
+            expect(mockTransactions.bookRequest.create).toHaveBeenCalledWith({
+                data: expect.objectContaining({
+                    userId,
+                    bookId,
+                    type: dto.type,
+                    status: BookRequestStatus.PENDING
+                })
+            });
+            expect(result).toEqual(createdRequest);
         });
 
-        it('should throw BadRequest if book not available', async () => {
-            mockPrismaService.book.findUnique.mockResolvedValue({ id: 'book-1', isAvailable: false });
+        it('should throw BadRequest if no copies available', async () => {
+            mockTransactions.book.findUnique.mockResolvedValue({ id: 'book-1' });
+            mockTransactions.inventoryItem.count.mockResolvedValue(0); // 0 copies
 
             await expect(service.create('user-1', { bookId: 'book-1', type: BookRequestType.PICKUP }))
                 .rejects.toThrow(BadRequestException);
@@ -94,16 +112,23 @@ describe('RequestsService', () => {
             const mockRequest = { id: requestId, bookId: 'book-1', status: BookRequestStatus.PENDING };
             const mockInventory = { id: 'inv-1', bookId: 'book-1', status: 'AVAILABLE' };
 
-            mockPrismaService.bookRequest.findUnique.mockResolvedValue(mockRequest);
-            mockPrismaService.inventoryItem.findFirst.mockResolvedValue(mockInventory);
-            mockPrismaService.bookRequest.update.mockResolvedValue({ ...mockRequest, status: BookRequestStatus.APPROVED });
-            mockPrismaService.inventoryItem.update.mockResolvedValue({ ...mockInventory, status: 'RESERVED' });
+            mockTransactions.bookRequest.findUnique.mockResolvedValue(mockRequest);
+            mockTransactions.inventoryItem.findFirst.mockResolvedValue(mockInventory);
+            mockTransactions.bookRequest.update.mockResolvedValue({ ...mockRequest, status: BookRequestStatus.APPROVED });
+            mockTransactions.inventoryItem.update.mockResolvedValue({ ...mockInventory, status: 'RESERVED' });
 
             await service.approve(requestId);
 
-            // Transaction passes the client, so we expect calls on the mockPrismaService (which is the client here)
-            expect(prisma.bookRequest.update).toHaveBeenCalled();
-            expect(prisma.inventoryItem.update).toHaveBeenCalled();
+            expect(mockTransactions.bookRequest.findUnique).toHaveBeenCalledWith({ where: { id: requestId } });
+            expect(mockTransactions.inventoryItem.findFirst).toHaveBeenCalled();
+            expect(mockTransactions.inventoryItem.update).toHaveBeenCalled();
+            expect(mockTransactions.bookRequest.update).toHaveBeenCalledWith(expect.objectContaining({
+                where: { id: requestId },
+                data: expect.objectContaining({
+                    status: BookRequestStatus.APPROVED,
+                    inventoryItemId: 'inv-1'
+                })
+            }));
         });
     });
 });
