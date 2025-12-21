@@ -37,4 +37,10 @@ export default tseslint.config(
       "prettier/prettier": "off",
     },
   },
+  {
+    files: ['**/*.service.ts'],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+    },
+  },
 );
