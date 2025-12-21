@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
 import {
   Injectable,
   NestInterceptor,
@@ -15,7 +16,7 @@ export class AuditInterceptor implements NestInterceptor {
   constructor(
     private reflector: Reflector,
     private auditService: AuditService,
-  ) {}
+  ) { }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const auditMetadata = this.reflector.getAllAndOverride<{
