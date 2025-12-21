@@ -98,7 +98,7 @@ export function RequestDialog({ bookId, bookTitle, trigger }: RequestDialogProps
                 <DialogHeader>
                     <DialogTitle>Request Book</DialogTitle>
                     <DialogDescription>
-                        Requesting "{bookTitle}". Choose your fulfillment method.
+                        Requesting &quot;{bookTitle}&quot;. Choose your fulfillment method.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>

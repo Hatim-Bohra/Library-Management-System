@@ -15,7 +15,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@repo/database';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { RejectRequestDto } from './dto/reject-request.dto';
-import { JwtPayload } from '../auth/types';
+import { JwtPayload } from '../auth/types/jwtPayload.type';
 import { Audit } from '../common/decorators/audit.decorator';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import {
@@ -31,7 +31,7 @@ import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 @UseInterceptors(AuditInterceptor)
 @Controller('requests')
 export class RequestsController {
-  constructor(private readonly requestsService: RequestsService) {}
+  constructor(private readonly requestsService: RequestsService) { }
 
   @ApiOperation({ summary: 'Create a new book request' })
   @ApiResponse({

@@ -11,6 +11,9 @@ import {
   BookRequestStatus,
   Role,
   BookRequestType,
+  Prisma,
+  LoanStatus,
+  BookRequest,
 } from '@repo/database';
 import { FinesService } from '../fines/fines.service';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
@@ -20,7 +23,7 @@ export class RequestsService {
   constructor(
     private prisma: PrismaService,
     private finesService: FinesService,
-  ) {}
+  ) { }
 
   async create(userId: string, createRequestDto: CreateRequestDto) {
     const { bookId, type, address } = createRequestDto;
@@ -99,9 +102,10 @@ export class RequestsService {
   }
 
   async approve(id: string) {
-    const request = await this.prisma.bookRequest.findUnique({
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const request = (await this.prisma.bookRequest.findUnique({
       where: { id },
-    });
+    })) as BookRequest | null;
 
     if (!request) throw new NotFoundException('Request not found');
     if (request.status !== BookRequestStatus.PENDING) {
@@ -109,7 +113,7 @@ export class RequestsService {
     }
 
     // Transaction: Find available copy, reserve it, approve request
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const availableCopy = await tx.inventoryItem.findFirst({
         where: {
           bookId: request.bookId,
@@ -185,7 +189,7 @@ export class RequestsService {
       );
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Fetch Applicable Rule
       // Ideally we get the user's role. For now assuming MEMBER or fetching user role if needed.
       // But wait, request.user isn't included. We need to fetch it or rely on userId.
@@ -205,7 +209,7 @@ export class RequestsService {
           userId: request.userId,
           bookId: request.bookId,
           dueDate,
-          status: 'ACTIVE',
+          status: LoanStatus.ACTIVE,
           // Snapshot Rule
           ruleGracePeriod: rule?.gracePeriod ?? 0,
           ruleDailyRate: rule?.dailyRate ?? 0,
@@ -217,7 +221,7 @@ export class RequestsService {
       // Update Inventory Status to ISSUED
       await tx.inventoryItem.update({
         where: { id: request.inventoryItemId! },
-        data: { status: 'ISSUED' /*, location? remove from shelf? */ },
+        data: { status: ItemStatus.ISSUED },
       });
 
       // Mark request as FULFILLED
@@ -262,7 +266,7 @@ export class RequestsService {
       throw new BadRequestException('No inventory item allocated');
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Fetch Applicable Rule
       const user = await tx.user.findUnique({ where: { id: request.userId } });
       const rule = user
@@ -278,7 +282,7 @@ export class RequestsService {
           userId: request.userId,
           bookId: request.bookId,
           dueDate,
-          status: 'ACTIVE',
+          status: LoanStatus.ACTIVE,
           // Snapshot Rule
           ruleGracePeriod: rule?.gracePeriod ?? 0,
           ruleDailyRate: rule?.dailyRate ?? 0,
@@ -290,7 +294,7 @@ export class RequestsService {
       // Update Inventory
       await tx.inventoryItem.update({
         where: { id: request.inventoryItemId! },
-        data: { status: 'ISSUED' },
+        data: { status: ItemStatus.ISSUED },
       });
 
       // Fulfill Request

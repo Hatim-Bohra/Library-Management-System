@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { setCookie, deleteCookie, getCookie } from 'cookies-next';
 import { jwtDecode } from 'jwt-decode';
@@ -25,6 +25,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const router = useRouter();
 
+    const logout = useCallback(() => {
+        deleteCookie('accessToken');
+        deleteCookie('refreshToken');
+        setUser(null);
+        router.push('/login');
+    }, [router]);
+
     useEffect(() => {
         // Check for existing token on mount
         const token = getCookie('accessToken');
@@ -37,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 logout();
             }
         }
-    }, []);
+    }, [logout]);
 
     const login = (accessToken: string, refreshToken: string) => {
         setCookie('accessToken', accessToken, { maxAge: 60 * 15 }); // 15 mins
@@ -50,13 +57,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (e) {
             console.error('Login failed: Invalid token');
         }
-    };
-
-    const logout = () => {
-        deleteCookie('accessToken');
-        deleteCookie('refreshToken');
-        setUser(null);
-        router.push('/login');
     };
 
     return (

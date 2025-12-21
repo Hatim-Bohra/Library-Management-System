@@ -6,6 +6,30 @@ import { Button } from "@/components/ui/button"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Badge } from "@/components/ui/badge"
 
+
+const LoanActions = ({ loan }: { loan: Loan }) => {
+    const queryClient = useQueryClient();
+    const mutation = useMutation({
+        mutationFn: checkInBook,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['loans'] });
+        }
+    });
+
+    if (loan.status === 'RETURNED') return null;
+
+    return (
+        <Button
+            variant="outline"
+            size="sm"
+            onClick={() => mutation.mutate(loan.id)}
+            disabled={mutation.isPending}
+        >
+            {mutation.isPending ? 'Returning...' : 'Return'}
+        </Button>
+    );
+};
+
 export const columns: ColumnDef<Loan>[] = [
     {
         accessorKey: "book.title",
@@ -32,29 +56,6 @@ export const columns: ColumnDef<Loan>[] = [
     },
     {
         id: "actions",
-        cell: ({ row }) => {
-            const loan = row.original;
-            const queryClient = useQueryClient();
-
-            const mutation = useMutation({
-                mutationFn: checkInBook,
-                onSuccess: () => {
-                    queryClient.invalidateQueries({ queryKey: ['loans'] });
-                }
-            });
-
-            if (loan.status === 'RETURNED') return null;
-
-            return (
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => mutation.mutate(loan.id)}
-                    disabled={mutation.isPending}
-                >
-                    {mutation.isPending ? 'Returning...' : 'Return'}
-                </Button>
-            )
-        },
+        cell: ({ row }) => <LoanActions loan={row.original} />,
     },
 ]

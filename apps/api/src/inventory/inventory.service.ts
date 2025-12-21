@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { AddInventoryDto, UpdateInventoryStatusDto } from './dto';
-import { InventoryAction, ItemStatus } from '@prisma/client';
+import { InventoryAction, ItemStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class InventoryService {
@@ -19,7 +19,7 @@ export class InventoryService {
     // 2. Transaction: Create Item, Create Log, Increment Book Copies
     // Updating book copies count is optional if we compute it,
     // but schema has 'copies' so let's keep it synced.
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const item = await tx.inventoryItem.create({
         data: {
           bookId,
@@ -55,7 +55,7 @@ export class InventoryService {
     dto: UpdateInventoryStatusDto,
     userId: string,
   ) {
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const item = await tx.inventoryItem.findUnique({ where: { id } });
       if (!item) throw new NotFoundException('Item not found');
 
@@ -98,7 +98,7 @@ export class InventoryService {
   // "Atomic reservation (no race conditions)"
   async reserveItem(bookId: string, userId: string) {
     // Find an available item and lock it
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Find first available item locked for update
       // Prisma doesn't support "FOR UPDATE SKIP LOCKED" natively in findFirst easily without raw query
       // But normal updateMany can act atomically as a "find and update one"
