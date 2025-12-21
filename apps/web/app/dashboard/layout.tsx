@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { Book, Users, Repeat, LayoutDashboard, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+import { useAuth } from '@/components/providers/auth-provider';
+
 export default function DashboardLayout({
     children,
 }: {
@@ -14,10 +16,10 @@ export default function DashboardLayout({
 }) {
     const pathname = usePathname();
     const router = useRouter();
+    const { logout } = useAuth(); // Use logout from context
 
     const handleLogout = () => {
-        // Clear token logic here
-        router.push('/login');
+        logout(); // Call context logout
     };
 
     const navItems = [

@@ -25,8 +25,11 @@ const formSchema = z.object({
     password: z.string().min(6),
 });
 
+import { useAuth } from '@/components/providers/auth-provider';
+
 export default function LoginPage() {
     const router = useRouter();
+    const { login: authLogin } = useAuth();
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -36,10 +39,10 @@ export default function LoginPage() {
     });
 
     const mutation = useMutation({
-        mutationFn: login,
-        onSuccess: () => {
-            // TODO: Save token
-            router.push('/dashboard');
+        mutationFn: login, // API call
+        onSuccess: (data) => { // API returns { accessToken, refreshToken, user }
+            authLogin(data.accessToken, data.refreshToken);
+            // Provider handles redirect
         },
         onError: (error) => {
             console.error(error);
