@@ -10,13 +10,17 @@ import {
     UseGuards,
     HttpCode,
     HttpStatus,
+    UseInterceptors, // Added UseInterceptors
 } from '@nestjs/common';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager'; // Added CacheInterceptor, CacheTTL
 import { BooksService } from './books.service';
 import { CreateBookDto, UpdateBookDto } from './dto';
 import { GetCurrentUserId, Public, Roles } from '../auth/decorators';
 import { Role } from '@prisma/client';
 import { RolesGuard } from '../auth/guards'; // Ensure this is exported or imported correctly
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto'; // Added PaginationQueryDto
+import { GetBooksQueryDto } from './dto/get-books-query.dto';
 
 @ApiTags('Books')
 @Controller('books')
@@ -33,9 +37,11 @@ export class BooksController {
 
     @Public()
     @Get()
+    @UseInterceptors(CacheInterceptor) // Applied CacheInterceptor
+    @CacheTTL(60000) // Applied CacheTTL
     @ApiOperation({ summary: 'List all books' })
-    findAll(@Query('q') query: string) {
-        return this.booksService.findAll(query);
+    findAll(@Query() query: GetBooksQueryDto) {
+        return this.booksService.findAll(query); // Updated service call
     }
 
     @Public()

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseInterceptors } from '@nestjs/common';
 import { RequestsService } from './requests.service';
 import { GetCurrentUserId } from '../auth/decorators/get-current-user-id.decorator';
 import { GetCurrentUser } from '../auth/decorators/get-current-user.decorator';
@@ -10,6 +10,7 @@ import { JwtPayload } from '../auth/types';
 import { Audit } from '../common/decorators/audit.decorator';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @ApiTags('Requests')
 @UseInterceptors(AuditInterceptor)
@@ -30,8 +31,8 @@ export class RequestsController {
     @ApiOperation({ summary: 'Get all requests (Admin/Librarian) or User requests' })
     @ApiResponse({ status: 200, description: 'List of requests.' })
     @Get()
-    findAll(@GetCurrentUser() user: JwtPayload) {
-        return this.requestsService.findAll(user.role, user.sub);
+    findAll(@GetCurrentUser() user: JwtPayload, @Query() query: PaginationQueryDto) {
+        return this.requestsService.findAll(user.role, user.sub, query);
     }
 
     @ApiOperation({ summary: 'Approve a request (Librarian only)' })

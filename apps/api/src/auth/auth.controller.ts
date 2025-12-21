@@ -21,9 +21,40 @@ import {
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
+    constructor(private authService: AuthService) { }
+
+    @Public()
     @Post('register')
-    async register() {
-        // TODO
-        return 'register';
+    @HttpCode(HttpStatus.CREATED)
+    @ApiCreatedResponse({ description: 'User successfully registered' })
+    signupLocal(@Body() dto: CreateUserDto): Promise<Tokens> {
+        return this.authService.signupLocal(dto);
+    }
+
+    @Public()
+    @Post('login')
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({ description: 'User successfully logged in' })
+    signinLocal(@Body() dto: AuthDto): Promise<Tokens> {
+        return this.authService.signinLocal(dto);
+    }
+
+    @Post('logout')
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({ description: 'User successfully logged out' })
+    logout(@GetCurrentUserId() userId: string) {
+        return this.authService.logout(userId);
+    }
+
+    @Public()
+    @UseGuards(RtGuard)
+    @Post('refresh')
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({ description: 'Tokens successfully refreshed' })
+    refreshTokens(
+        @GetCurrentUserId() userId: string,
+        @GetCurrentUser('refreshToken') refreshToken: string,
+    ) {
+        return this.authService.refreshTokens(userId, refreshToken);
     }
 }

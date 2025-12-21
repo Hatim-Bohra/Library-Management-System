@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateBookDto, UpdateBookDto } from './dto';
 import { Book } from '@prisma/client';
+import { GetBooksQueryDto } from './dto/get-books-query.dto';
 
 @Injectable()
 export class BooksService {
@@ -17,13 +18,18 @@ export class BooksService {
         return book;
     }
 
-    async findAll(query: string = ''): Promise<Book[]> {
+    async findAll(queryDto: GetBooksQueryDto): Promise<Book[]> {
+        const { q, page = 1, limit = 10 } = queryDto;
+        const skip = (page - 1) * limit;
+
         return this.prisma.book.findMany({
+            skip,
+            take: limit,
             where: {
-                OR: [
-                    { title: { contains: query, mode: 'insensitive' } },
-                    { isbn: { contains: query, mode: 'insensitive' } },
-                ],
+                OR: q ? [
+                    { title: { contains: q, mode: 'insensitive' } },
+                    { isbn: { contains: q, mode: 'insensitive' } },
+                ] : undefined,
             },
             include: {
                 author: true,

@@ -4,6 +4,7 @@ import { CreateRequestDto } from './dto/create-request.dto';
 import { RejectRequestDto } from './dto/reject-request.dto';
 import { ItemStatus, BookRequestStatus, Role, BookRequestType } from '@repo/database';
 import { FinesService } from '../fines/fines.service';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @Injectable()
 export class RequestsService {
@@ -59,9 +60,14 @@ export class RequestsService {
         });
     }
 
-    async findAll(role: Role, userId: string) {
+    async findAll(role: Role, userId: string, query?: PaginationQueryDto) {
+        const { page = 1, limit = 10 } = query || {};
+        const skip = (page - 1) * limit;
+
         if (role === Role.LIBRARIAN || role === Role.ADMIN) {
             return this.prisma.bookRequest.findMany({
+                skip,
+                take: limit,
                 include: {
                     book: true,
                     user: true,
@@ -71,6 +77,8 @@ export class RequestsService {
         }
 
         return this.prisma.bookRequest.findMany({
+            skip,
+            take: limit,
             where: { userId },
             include: {
                 book: true,
@@ -102,9 +110,15 @@ export class RequestsService {
                 throw new BadRequestException('No copies available to fulfill this request');
             }
 
-            // Reserve the copy
+            // Reserve the copy - Optimistic Locking
+            // We ensure it is STILL available at the moment of update.
+            // If another transaction reserved it in the meantime, this will throw P2025 (Record Not Found)
+            // preventing double booking.
             await tx.inventoryItem.update({
-                where: { id: availableCopy.id },
+                where: {
+                    id: availableCopy.id,
+                    status: ItemStatus.AVAILABLE
+                },
                 data: { status: ItemStatus.RESERVED },
             });
 
