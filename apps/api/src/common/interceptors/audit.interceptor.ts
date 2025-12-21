@@ -55,7 +55,7 @@ export class AuditInterceptor implements NestInterceptor {
                 user.sub, // Assuming sub is the userId based on tokens.type.ts
                 details,
               )
-              .catch((err) => console.error('Audit Log Failed', err));
+              .catch((err: any) => console.error('Audit Log Failed', err));
           }
         })();
       }),
