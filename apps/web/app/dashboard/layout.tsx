@@ -27,8 +27,12 @@ export default function DashboardLayout({
         { href: '/dashboard/books', label: 'Books', icon: Book },
         { href: '/dashboard/requests', label: 'My Requests', icon: Repeat },
         { href: '/dashboard/my-loans', label: 'My Loans', icon: Users },
-        // { href: '/dashboard/members', label: 'Members', icon: Users }, // Hide Admin-only? For now keep or conditionally render.
-        // { href: '/dashboard/circulation', label: 'Circulation', icon: Repeat }, // Admin view
+
+        // Admin
+        { href: '/dashboard/admin/books', label: 'Manage Books', icon: Book },
+        { href: '/dashboard/admin/requests', label: 'Manage Requests', icon: Repeat },
+        { href: '/dashboard/admin/fines', label: 'Fine Rules', icon: Users },
+        { href: '/dashboard/admin/audit', label: 'Audit Logs', icon: Users },
     ];
 
     return (

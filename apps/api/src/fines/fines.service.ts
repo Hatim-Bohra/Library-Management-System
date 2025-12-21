@@ -1,45 +1,64 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { Loan, FineRule, Role, Book } from '@repo/database';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Role } from '@repo/database';
 
 @Injectable()
 export class FinesService {
     constructor(private prisma: PrismaService) { }
 
-    async getApplicableRule(role: Role): Promise<FineRule | null> {
-        return this.prisma.fineRule.findUnique({
+    async getApplicableRule(role: Role) {
+        const rule = await this.prisma.fineRule.findUnique({
             where: { role },
+        });
+        // Return default 0s if no rule exists, or handle as needed
+        return rule || { gracePeriod: 0, dailyRate: 0, maxFine: null, lostBookProcessingFee: 0 };
+    }
+
+    async getRules() {
+        return this.prisma.fineRule.findMany();
+    }
+
+    async updateRule(role: Role, data: { gracePeriod: number; dailyRate: number; maxFine?: number; lostBookProcessingFee: number }) {
+        return this.prisma.fineRule.upsert({
+            where: { role },
+            update: data,
+            create: { role, ...data }
         });
     }
 
-    calculateOverdueFine(loan: Loan): number {
+    calculateOverdueFine(loan: {
+        dueDate?: Date;
+        returnedAt?: Date | null;
+        ruleGracePeriod: number;
+        ruleDailyRate: any; // Decimal
+        ruleMaxFine?: any;  // Decimal
+    }): number {
         if (!loan.dueDate) return 0;
 
-        // Use snapshot values if available, else default to 0 (or fetch current rule? Snapshot should be preferred)
-        // If snapshot is missing (legacy loans), we might need fallback logic, but for new system assume zero or current.
-        // Let's stick to snapshot as per requirement.
-        const dailyRate = loan.ruleDailyRate ? Number(loan.ruleDailyRate) : 0;
-        const gracePeriod = loan.ruleGracePeriod ?? 0;
-        const maxFine = loan.ruleMaxFine ? Number(loan.ruleMaxFine) : Infinity;
+        // Logic: 
+        // overdueDays = (returnedAt || now) - dueDate
+        // if overdueDays <= gracePeriod return 0
+        // chargeableDays = overdueDays - gracePeriod
+        // fine = chargeableDays * dailyRate
+        // if maxFine && fine > maxFine return maxFine
 
-        const now = new Date();
-        // Reset times to compare dates only
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const due = new Date(loan.dueDate.getFullYear(), loan.dueDate.getMonth(), loan.dueDate.getDate());
+        const endDate = loan.returnedAt || new Date();
+        const diffTime = endDate.getTime() - new Date(loan.dueDate).getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        if (today <= due) return 0;
+        if (diffDays <= loan.ruleGracePeriod) return 0;
 
-        const diffTime = Math.abs(today.getTime() - due.getTime());
-        const overdueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const chargeableDays = diffDays - loan.ruleGracePeriod;
+        let fine = chargeableDays * Number(loan.ruleDailyRate);
 
-        const chargeableDays = Math.max(0, overdueDays - gracePeriod);
-        const fine = chargeableDays * dailyRate;
+        if (loan.ruleMaxFine && fine > Number(loan.ruleMaxFine)) {
+            fine = Number(loan.ruleMaxFine);
+        }
 
-        return Math.min(fine, maxFine);
+        return Math.max(0, fine);
     }
 
-    calculateLostFee(bookPrice: number, processingFee: number): number {
-        return bookPrice + processingFee;
+    calculateLostFee(bookPrice: number, processingFee: any): number {
+        return Number(bookPrice) + Number(processingFee);
     }
 }

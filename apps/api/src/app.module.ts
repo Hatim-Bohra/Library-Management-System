@@ -8,11 +8,12 @@ import { CirculationModule } from './circulation/circulation.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { RequestsModule } from './requests/requests.module';
 import { FinesModule } from './fines/fines.module';
+import { AuditModule } from './audit/audit.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), DatabaseModule, AuthModule, BooksModule, MembersModule, CirculationModule, InventoryModule, RequestsModule, FinesModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), DatabaseModule, AuthModule, BooksModule, MembersModule, CirculationModule, InventoryModule, RequestsModule, FinesModule, AuditModule],
   controllers: [AppController],
   providers: [AppService],
 })
