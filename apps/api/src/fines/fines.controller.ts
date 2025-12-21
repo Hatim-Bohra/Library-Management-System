@@ -1,9 +1,12 @@
-import { Controller, Get, Body, Put, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Body, Put, Param, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FinesService } from './fines.service';
 import { Role } from '@repo/database';
 import { Roles } from '../auth/decorators';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Audit } from '../common/decorators/audit.decorator';
+import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 
+@UseInterceptors(AuditInterceptor)
 @ApiTags('Fines')
 @Controller('fines')
 export class FinesController {
@@ -17,6 +20,7 @@ export class FinesController {
         return this.finesService.getRules();
     }
 
+    @Audit('UPDATE_FINE_RULE', 'FineRule')
     @Roles(Role.ADMIN)
     @ApiBearerAuth()
     @Put('rules/:role')
