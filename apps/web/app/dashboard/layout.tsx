@@ -25,8 +25,10 @@ export default function DashboardLayout({
     const navItems = [
         { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
         { href: '/dashboard/books', label: 'Books', icon: Book },
-        { href: '/dashboard/members', label: 'Members', icon: Users },
-        { href: '/dashboard/circulation', label: 'Circulation', icon: Repeat },
+        { href: '/dashboard/requests', label: 'My Requests', icon: Repeat },
+        { href: '/dashboard/my-loans', label: 'My Loans', icon: Users },
+        // { href: '/dashboard/members', label: 'Members', icon: Users }, // Hide Admin-only? For now keep or conditionally render.
+        // { href: '/dashboard/circulation', label: 'Circulation', icon: Repeat }, // Admin view
     ];
 
     return (

@@ -1,33 +1,48 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { getBooks, Book } from '@/lib/books';
-import { columns } from './columns';
-import { DataTable } from '@/components/ui/data-table';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import Link from 'next/link';
+import api from '@/lib/api';
+import { BookCard } from '@/components/books/book-card';
+import { Input } from '@/components/ui/input';
+import { useState } from 'react';
 
 export default function BooksPage() {
-    const { data, isLoading, error } = useQuery<Book[]>({
-        queryKey: ['books'],
-        queryFn: getBooks,
+    const [search, setSearch] = useState('');
+
+    // TODO: Ideally we separate Admin vs Member views. 
+    // For this task we are focusing on "User-facing UI", so we'll default to the catalog view.
+    // Real app might need separate routes or role checks here.
+
+    const { data: books, isLoading, error } = useQuery({
+        queryKey: ['books', search],
+        queryFn: async () => {
+            const { data } = await api.get('/books', { params: { search } });
+            return data;
+        }
     });
 
-    if (isLoading) return <div>Loading...</div>;
-    if (error) return <div>Error loading books</div>;
+    if (isLoading) return <div>Loading books...</div>;
+    if (error) return <div>Error loading books: {(error as any).message}</div>;
 
     return (
-        <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Books</h2>
-                <Button asChild>
-                    <Link href="/dashboard/books/new">
-                        <Plus className="mr-2 h-4 w-4" /> Add Book
-                    </Link>
-                </Button>
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h2 className="text-3xl font-bold tracking-tight">Library Catalog</h2>
+                <div className="w-1/3">
+                    <Input
+                        placeholder="Search books..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </div>
             </div>
-            <DataTable columns={columns} data={data || []} />
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {books?.map((book: any) => (
+                    <BookCard key={book.id} book={book} />
+                ))}
+            </div>
+            {books?.length === 0 && <p className="text-muted-foreground">No books found.</p>}
         </div>
     );
 }

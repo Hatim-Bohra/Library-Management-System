@@ -7,6 +7,16 @@ const api = axios.create({
     },
 });
 
+import { getCookie } from 'cookies-next';
+
+api.interceptors.request.use((config) => {
+    const token = getCookie('accessToken');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
 api.interceptors.response.use(
     (response: AxiosResponse) => response,
     (error: unknown) => {
