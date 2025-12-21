@@ -18,14 +18,19 @@ export class BooksService {
     return book;
   }
 
-  findAll(search?: string): Promise<Book[]> {
+  findAll(query: { q?: string; page?: number; limit?: number }) {
+    const { q, page = 1, limit = 10 } = query;
+    const skip = (page - 1) * limit;
+
     return this.prisma.book.findMany({
-      where: search
+      skip,
+      take: limit,
+      where: q
         ? {
           OR: [
-            { title: { contains: search, mode: 'insensitive' } },
-            { author: { name: { contains: search, mode: 'insensitive' } } },
-            { isbn: { contains: search, mode: 'insensitive' } },
+            { title: { contains: q, mode: 'insensitive' } },
+            { author: { name: { contains: q, mode: 'insensitive' } } },
+            { isbn: { contains: q, mode: 'insensitive' } },
           ],
         }
         : undefined,

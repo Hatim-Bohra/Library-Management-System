@@ -34,6 +34,8 @@ jobs:
       - name: Setup Database
         run: |
           npm ci
+          # Create .env file for database package explicitly to ensure Prisma finds it
+          echo "DATABASE_URL=postgresql://user:password@localhost:5432/library?schema=public" > packages/database/.env
           npx turbo run db:generate
           npx turbo run db:push
         env:
