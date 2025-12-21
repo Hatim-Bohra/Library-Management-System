@@ -23,6 +23,7 @@ model User {
   reservations Reservation[]
   auditLogs    AuditLog[]
   inventoryTransactions InventoryTransaction[]
+  bookRequests          BookRequest[]
 }
 
 enum Role {
@@ -49,6 +50,8 @@ model Book {
   inventoryItems InventoryItem[]
   loans        Loan[]
   reservations Reservation[]
+  
+  bookRequests BookRequest[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -136,6 +139,7 @@ model InventoryItem {
   updatedAt DateTime   @updatedAt
   
   transactions InventoryTransaction[]
+  bookRequest  BookRequest?
 }
 
 enum ItemStatus {
@@ -161,4 +165,37 @@ enum InventoryAction {
   ADD
   STATUS_CHANGE
   REMOVE
+}
+
+model BookRequest {
+  id              String            @id @default(uuid())
+  userId          String
+  user            User              @relation(fields: [userId], references: [id])
+  bookId          String
+  book            Book              @relation(fields: [bookId], references: [id])
+  inventoryItemId String?           @unique
+  inventoryItem   InventoryItem?    @relation(fields: [inventoryItemId], references: [id])
+  
+  status          BookRequestStatus @default(PENDING)
+  type            BookRequestType
+  address         String?           // Only for DELIVERY
+  rejectionReason String?
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+enum BookRequestStatus {
+  PENDING
+  APPROVED
+  OUT_FOR_DELIVERY
+  DELIVERY_FAILED
+  REJECTED
+  FULFILLED
+  CANCELLED
+}
+
+enum BookRequestType {
+  PICKUP
+  DELIVERY
 }

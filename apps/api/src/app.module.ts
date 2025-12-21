@@ -6,11 +6,12 @@ import { BooksModule } from './books/books.module';
 import { MembersModule } from './members/members.module';
 import { CirculationModule } from './circulation/circulation.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { RequestsModule } from './requests/requests.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), DatabaseModule, AuthModule, BooksModule, MembersModule, CirculationModule, InventoryModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), DatabaseModule, AuthModule, BooksModule, MembersModule, CirculationModule, InventoryModule, RequestsModule],
   controllers: [AppController],
   providers: [AppService],
 })
