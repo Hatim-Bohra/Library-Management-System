@@ -22,6 +22,7 @@ model User {
   loans        Loan[]
   reservations Reservation[]
   auditLogs    AuditLog[]
+  inventoryTransactions InventoryTransaction[]
 }
 
 enum Role {
@@ -45,6 +46,7 @@ model Book {
   categoryId  String
   category    Category @relation(fields: [categoryId], references: [id])
 
+  inventoryItems InventoryItem[]
   loans        Loan[]
   reservations Reservation[]
   
@@ -121,4 +123,42 @@ model AuditLog {
   user        User     @relation(fields: [performedBy], references: [id])
   details     Json?
   createdAt   DateTime @default(now())
+}
+
+model InventoryItem {
+  id        String     @id @default(uuid())
+  bookId    String
+  book      Book       @relation(fields: [bookId], references: [id])
+  barcode   String     @unique
+  status    ItemStatus @default(AVAILABLE)
+  location  String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  transactions InventoryTransaction[]
+}
+
+enum ItemStatus {
+  AVAILABLE
+  ISSUED
+  LOST
+  DAMAGED
+  RESERVED
+}
+
+model InventoryTransaction {
+  id              String          @id @default(uuid())
+  inventoryItemId String
+  inventoryItem   InventoryItem   @relation(fields: [inventoryItemId], references: [id])
+  action          InventoryAction
+  reason          String?
+  performedBy     String
+  user            User            @relation(fields: [performedBy], references: [id])
+  createdAt       DateTime        @default(now())
+}
+
+enum InventoryAction {
+  ADD
+  STATUS_CHANGE
+  REMOVE
 }
