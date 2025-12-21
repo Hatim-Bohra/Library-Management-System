@@ -3,10 +3,14 @@ import { PrismaService } from '../database/prisma.service';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { RejectRequestDto } from './dto/reject-request.dto';
 import { ItemStatus, BookRequestStatus, Role, BookRequestType } from '@repo/database';
+import { FinesService } from '../fines/fines.service';
 
 @Injectable()
 export class RequestsService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private finesService: FinesService,
+    ) { }
 
     async create(userId: string, createRequestDto: CreateRequestDto) {
         const { bookId, type, address } = createRequestDto;
@@ -141,11 +145,21 @@ export class RequestsService {
         if (request.status !== BookRequestStatus.APPROVED) {
             throw new BadRequestException('Request must be approved before collection');
         }
+        if (request.type !== BookRequestType.PICKUP) {
+            throw new BadRequestException('Only pickup requests can be collected. Use dispatch/deliver for delivery requests.');
+        }
         if (!request.inventoryItemId) {
             throw new BadRequestException('No inventory item allocated to this request');
         }
 
         return this.prisma.$transaction(async (tx) => {
+            // Fetch Applicable Rule
+            // Ideally we get the user's role. For now assuming MEMBER or fetching user role if needed.
+            // But wait, request.user isn't included. We need to fetch it or rely on userId.
+            // Let's fetch user role or just assume default rule behavior if role is strictly tied to user.
+            const user = await tx.user.findUnique({ where: { id: request.userId } });
+            const rule = user ? await this.finesService.getApplicableRule(user.role) : null;
+
             // Create Loan
             // Calculate due date (e.g., 14 days from now)
             const dueDate = new Date();
@@ -157,6 +171,11 @@ export class RequestsService {
                     bookId: request.bookId,
                     dueDate,
                     status: 'ACTIVE',
+                    // Snapshot Rule
+                    ruleGracePeriod: rule?.gracePeriod ?? 0,
+                    ruleDailyRate: rule?.dailyRate ?? 0,
+                    ruleMaxFine: rule?.maxFine ?? null,
+                    ruleLostFee: rule?.lostBookProcessingFee ?? 0,
                 }
             });
 
@@ -207,6 +226,10 @@ export class RequestsService {
         }
 
         return this.prisma.$transaction(async (tx) => {
+            // Fetch Applicable Rule
+            const user = await tx.user.findUnique({ where: { id: request.userId } });
+            const rule = user ? await this.finesService.getApplicableRule(user.role) : null;
+
             // Create Loan (Timer starts NOW)
             const dueDate = new Date();
             dueDate.setDate(dueDate.getDate() + 14);
@@ -217,6 +240,11 @@ export class RequestsService {
                     bookId: request.bookId,
                     dueDate,
                     status: 'ACTIVE',
+                    // Snapshot Rule
+                    ruleGracePeriod: rule?.gracePeriod ?? 0,
+                    ruleDailyRate: rule?.dailyRate ?? 0,
+                    ruleMaxFine: rule?.maxFine ?? null,
+                    ruleLostFee: rule?.lostBookProcessingFee ?? 0,
                 }
             });
 

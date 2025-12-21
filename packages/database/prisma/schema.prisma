@@ -40,6 +40,7 @@ model Book {
   copies      Int      @default(1)
   isAvailable Boolean  @default(true)
   description String?
+  price       Decimal  @default(0.0)
   
   authorId    String
   author      Author   @relation(fields: [authorId], references: [id])
@@ -84,6 +85,12 @@ model Loan {
   
   status     LoanStatus @default(ACTIVE)
   fines      Fine[]
+  
+  // Rule Snapshot
+  ruleGracePeriod Int?
+  ruleDailyRate   Decimal?
+  ruleMaxFine     Decimal?
+  ruleLostFee     Decimal?
 }
 
 enum LoanStatus {
@@ -115,6 +122,18 @@ model Fine {
   amount    Decimal
   paid      Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model FineRule {
+  id        String   @id @default(uuid())
+  role      Role     @unique
+  gracePeriod Int    @default(0)
+  dailyRate   Decimal @default(0.0)
+  maxFine     Decimal?
+  lostBookProcessingFee Decimal @default(0.0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model AuditLog {
