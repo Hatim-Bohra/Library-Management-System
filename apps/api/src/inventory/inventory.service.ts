@@ -9,7 +9,7 @@ import { InventoryAction, ItemStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class InventoryService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async addCopy(bookId: string, dto: AddInventoryDto, userId: string) {
     // 1. Check if Book exists
@@ -50,7 +50,7 @@ export class InventoryService {
     });
   }
 
-  async updateStatus(
+  updateStatus(
     id: string,
     dto: UpdateInventoryStatusDto,
     userId: string,
@@ -86,7 +86,7 @@ export class InventoryService {
     });
   }
 
-  async listByBook(bookId: string) {
+  listByBook(bookId: string) {
     return this.prisma.inventoryItem.findMany({
       where: { bookId },
       orderBy: { createdAt: 'asc' },
@@ -96,7 +96,7 @@ export class InventoryService {
   // Atomic Reservation Logic
   // This might be called by Circulation Module later, but strictly implementing it as requested
   // "Atomic reservation (no race conditions)"
-  async reserveItem(bookId: string, userId: string) {
+  reserveItem(bookId: string, userId: string) {
     // Find an available item and lock it
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Find first available item locked for update

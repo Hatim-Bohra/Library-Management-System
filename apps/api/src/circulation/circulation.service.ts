@@ -4,7 +4,7 @@ import { CreateLoanDto } from './dto/create-loan.dto';
 
 @Injectable()
 export class CirculationService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async checkOut(createLoanDto: CreateLoanDto) {
     const { userId, bookId } = createLoanDto;
@@ -28,7 +28,7 @@ export class CirculationService {
     });
   }
 
-  async checkIn(loanId: string) {
+  checkIn(loanId: string) {
     return this.prisma.loan.update({
       where: { id: loanId },
       data: {
@@ -38,9 +38,12 @@ export class CirculationService {
     });
   }
 
-  async findAll() {
+  findAll() {
     return this.prisma.loan.findMany({
-      include: { user: true, book: true },
+      include: {
+        book: true,
+        user: true,
+      },
     });
   }
 }

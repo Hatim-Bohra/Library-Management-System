@@ -1,4 +1,4 @@
- 
+
 import {
   Injectable,
   NestInterceptor,
@@ -33,29 +33,31 @@ export class AuditInterceptor implements NestInterceptor {
     // Assuming AuthGuard puts user in request. If not authenticated, might need handling.
 
     return next.handle().pipe(
-      tap(async (data) => {
-        if (user) {
-          // Try to infer entityId.
-          // 1. From params (e.g. /requests/:id)
-          // 2. From response data (e.g. { id: '...' })
-          let entityId = request.params.id;
-          if (!entityId && data && typeof data === 'object' && data.id) {
-            entityId = data.id;
+      tap((data) => {
+        void (async () => {
+          if (user) {
+            // Try to infer entityId.
+            // 1. From params (e.g. /requests/:id)
+            // 2. From response data (e.g. { id: '...' })
+            let entityId = request.params.id;
+            if (!entityId && data && typeof data === 'object' && data.id) {
+              entityId = data.id;
+            }
+            if (!entityId) entityId = 'N/A';
+
+            const details = request.body ? { body: request.body } : undefined;
+
+            await this.auditService
+              .log(
+                auditMetadata.action,
+                auditMetadata.entityType || 'UNKNOWN',
+                entityId,
+                user.sub, // Assuming sub is the userId based on tokens.type.ts
+                details,
+              )
+              .catch((err) => console.error('Audit Log Failed', err));
           }
-          if (!entityId) entityId = 'N/A';
-
-          const details = request.body ? { body: request.body } : undefined;
-
-          await this.auditService
-            .log(
-              auditMetadata.action,
-              auditMetadata.entityType || 'UNKNOWN',
-              entityId,
-              user.sub, // Assuming sub is the userId based on tokens.type.ts
-              details,
-            )
-            .catch((err) => console.error('Audit Log Failed', err));
-        }
+        })();
       }),
     );
   }

@@ -6,7 +6,7 @@ import { GetBooksQueryDto } from './dto/get-books-query.dto';
 
 @Injectable()
 export class BooksService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(dto: CreateBookDto): Promise<Book> {
     const book = await this.prisma.book.create({
@@ -18,24 +18,20 @@ export class BooksService {
     return book;
   }
 
-  async findAll(queryDto: GetBooksQueryDto): Promise<Book[]> {
-    const { q, page = 1, limit = 10 } = queryDto;
-    const skip = (page - 1) * limit;
-
+  findAll(search?: string): Promise<Book[]> {
     return this.prisma.book.findMany({
-      skip,
-      take: limit,
-      where: {
-        OR: q
-          ? [
-              { title: { contains: q, mode: 'insensitive' } },
-              { isbn: { contains: q, mode: 'insensitive' } },
-            ]
-          : undefined,
-      },
+      where: search
+        ? {
+          OR: [
+            { title: { contains: search, mode: 'insensitive' } },
+            { author: { name: { contains: search, mode: 'insensitive' } } },
+            { isbn: { contains: search, mode: 'insensitive' } },
+          ],
+        }
+        : undefined,
       include: {
         author: true,
-        category: true,
+        inventoryItems: true,
       },
     });
   }

@@ -4,7 +4,7 @@ import { Role } from '@repo/database';
 
 @Injectable()
 export class FinesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async getApplicableRule(role: Role) {
     const rule = await this.prisma.fineRule.findUnique({
@@ -21,11 +21,11 @@ export class FinesService {
     );
   }
 
-  async getRules() {
+  getRules() {
     return this.prisma.fineRule.findMany();
   }
 
-  async updateRule(
+  updateRule(
     role: Role,
     data: {
       gracePeriod: number;

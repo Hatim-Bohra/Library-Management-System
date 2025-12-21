@@ -74,7 +74,7 @@ export class RequestsService {
     });
   }
 
-  async findAll(role: Role, userId: string, query?: PaginationQueryDto) {
+  findAll(role: Role, userId: string, query?: PaginationQueryDto) {
     const { page = 1, limit = 10 } = query || {};
     const skip = (page - 1) * limit;
 
@@ -102,7 +102,7 @@ export class RequestsService {
   }
 
   async approve(id: string) {
-     
+
     const request = (await this.prisma.bookRequest.findUnique({
       where: { id },
     }));
