@@ -13,6 +13,50 @@ services:
       - "${DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - lms-network
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: lms_api
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-lms}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-supersecret}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-supersecretrefresh}
+      PORT: 3002
+    ports:
+      - "3001:3002"
+    depends_on:
+      - db
+    networks:
+      - lms-network
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3001
+    container_name: lms_web
+    restart: always
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      PORT: 3000
+    ports:
+      - "3003:3000"
+    depends_on:
+      - api
+    networks:
+      - lms-network
 
 volumes:
   pgdata:
+
+
+networks:
+  lms-network:
+    driver: bridge

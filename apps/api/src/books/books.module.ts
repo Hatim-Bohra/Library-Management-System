@@ -4,8 +4,8 @@ import { BooksController } from './books.controller';
 import { DatabaseModule } from '../database/database.module';
 
 @Module({
-    imports: [DatabaseModule],
-    controllers: [BooksController],
-    providers: [BooksService],
+  imports: [DatabaseModule],
+  controllers: [BooksController],
+  providers: [BooksService],
 })
-export class BooksModule { }
+export class BooksModule {}

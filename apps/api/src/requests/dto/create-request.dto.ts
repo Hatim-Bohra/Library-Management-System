@@ -1,16 +1,22 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { BookRequestType } from '@repo/database';
 
 export class CreateRequestDto {
-    @IsUUID()
-    @IsNotEmpty()
-    bookId!: string;
+  @IsUUID()
+  @IsNotEmpty()
+  bookId!: string;
 
-    @IsEnum(BookRequestType)
-    @IsNotEmpty()
-    type!: BookRequestType;
+  @IsEnum(BookRequestType)
+  @IsNotEmpty()
+  type!: BookRequestType;
 
-    @IsString()
-    @IsOptional()
-    address?: string;
+  @IsString()
+  @IsOptional()
+  address?: string;
 }

@@ -1,40 +1,38 @@
-
 import {
-    ExceptionFilter,
-    Catch,
-    ArgumentsHost,
-    HttpException,
-    HttpStatus,
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-    catch(exception: unknown, host: ArgumentsHost) {
-        const ctx = host.switchToHttp();
-        const response = ctx.getResponse<Response>();
-        const request = ctx.getRequest<Request>();
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
 
-        const status =
-            exception instanceof HttpException
-                ? exception.getStatus()
-                : HttpStatus.INTERNAL_SERVER_ERROR;
+    const status =
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : HttpStatus.INTERNAL_SERVER_ERROR;
 
-        const message =
-            exception instanceof HttpException
-                ? exception.getResponse()
-                : 'Internal Server Error';
+    const message =
+      exception instanceof HttpException
+        ? exception.getResponse()
+        : 'Internal Server Error';
 
-        // Normalize message if it's an object (e.g. standard validation error)
-        const errorResponse = typeof message === 'object' && message !== null
-            ? message
-            : { message };
+    // Normalize message if it's an object (e.g. standard validation error)
+    const errorResponse =
+      typeof message === 'object' && message !== null ? message : { message };
 
-        response.status(status).json({
-            statusCode: status,
-            ...((errorResponse as any)),
-            timestamp: new Date().toISOString(),
-            path: request.url,
-        });
-    }
+    response.status(status).json({
+      statusCode: status,
+      ...(errorResponse as any),
+      timestamp: new Date().toISOString(),
+      path: request.url,
+    });
+  }
 }

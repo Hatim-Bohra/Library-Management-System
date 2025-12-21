@@ -5,8 +5,8 @@ import { RequestsController } from './requests.controller';
 import { FinesModule } from '../fines/fines.module';
 
 @Module({
-    imports: [FinesModule],
-    controllers: [RequestsController],
-    providers: [RequestsService],
+  imports: [FinesModule],
+  controllers: [RequestsController],
+  providers: [RequestsService],
 })
-export class RequestsModule { }
+export class RequestsModule {}

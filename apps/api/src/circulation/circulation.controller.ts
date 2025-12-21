@@ -6,23 +6,23 @@ import { CreateLoanDto } from './dto/create-loan.dto';
 @ApiTags('circulation')
 @Controller('circulation')
 export class CirculationController {
-    constructor(private readonly circulationService: CirculationService) { }
+  constructor(private readonly circulationService: CirculationService) {}
 
-    @Post('checkout')
-    @ApiOperation({ summary: 'Borrow a book' })
-    checkOut(@Body() createLoanDto: CreateLoanDto) {
-        return this.circulationService.checkOut(createLoanDto);
-    }
+  @Post('checkout')
+  @ApiOperation({ summary: 'Borrow a book' })
+  checkOut(@Body() createLoanDto: CreateLoanDto) {
+    return this.circulationService.checkOut(createLoanDto);
+  }
 
-    @Patch('checkin/:id')
-    @ApiOperation({ summary: 'Return a book' })
-    checkIn(@Param('id') id: string) {
-        return this.circulationService.checkIn(id);
-    }
+  @Patch('checkin/:id')
+  @ApiOperation({ summary: 'Return a book' })
+  checkIn(@Param('id') id: string) {
+    return this.circulationService.checkIn(id);
+  }
 
-    @Get()
-    @ApiOperation({ summary: 'List all loans' })
-    findAll() {
-        return this.circulationService.findAll();
-    }
+  @Get()
+  @ApiOperation({ summary: 'List all loans' })
+  findAll() {
+    return this.circulationService.findAll();
+  }
 }

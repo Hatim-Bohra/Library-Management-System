@@ -3,17 +3,17 @@ import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
 export class MembersService {
-    constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
-    async findAll() {
-        return this.prisma.user.findMany();
-    }
+  async findAll() {
+    return this.prisma.user.findMany();
+  }
 
-    async findOne(id: string) {
-        return this.prisma.user.findUniqueOrThrow({ where: { id } });
-    }
+  async findOne(id: string) {
+    return this.prisma.user.findUniqueOrThrow({ where: { id } });
+  }
 
-    async remove(id: string) {
-        return this.prisma.user.delete({ where: { id } });
-    }
+  async remove(id: string) {
+    return this.prisma.user.delete({ where: { id } });
+  }
 }

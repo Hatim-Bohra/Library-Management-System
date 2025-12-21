@@ -5,30 +5,30 @@ import { ROLES_KEY } from '../decorators/roles.decorator';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-    constructor(private reflector: Reflector) { }
+  constructor(private reflector: Reflector) {}
 
-    canActivate(context: ExecutionContext): boolean {
-        const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
-            context.getHandler(),
-            context.getClass(),
-        ]);
-        if (!requiredRoles) {
-            return true;
-        }
-        const { user } = context.switchToHttp().getRequest();
-
-        // Check for "Librarian as Admin" config flag logic if required
-        // For now, standard role checking
-        if (requiredRoles.some((role) => user.role === role)) {
-            return true;
-        }
-
-        // Special Logic: Librarian can act as Admin if configured?
-        // Implementation: If required is ADMIN, but user is LIBRARIAN and ENV var set.
-        if (requiredRoles.includes(Role.ADMIN) && user.role === Role.LIBRARIAN) {
-            return process.env.LIBRARIAN_CAN_ACT_AS_ADMIN === 'true';
-        }
-
-        return false;
+  canActivate(context: ExecutionContext): boolean {
+    const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (!requiredRoles) {
+      return true;
     }
+    const { user } = context.switchToHttp().getRequest();
+
+    // Check for "Librarian as Admin" config flag logic if required
+    // For now, standard role checking
+    if (requiredRoles.some((role) => user.role === role)) {
+      return true;
+    }
+
+    // Special Logic: Librarian can act as Admin if configured?
+    // Implementation: If required is ADMIN, but user is LIBRARIAN and ENV var set.
+    if (requiredRoles.includes(Role.ADMIN) && user.role === Role.LIBRARIAN) {
+      return process.env.LIBRARIAN_CAN_ACT_AS_ADMIN === 'true';
+    }
+
+    return false;
+  }
 }

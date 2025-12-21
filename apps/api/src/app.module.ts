@@ -18,10 +18,12 @@ import { AppService } from './app.service';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 100, // 100 requests per minute
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100, // 100 requests per minute
+      },
+    ]),
     CacheModule.register({ isGlobal: true }),
     DatabaseModule,
     AuthModule,
@@ -31,7 +33,7 @@ import { AppService } from './app.service';
     InventoryModule,
     RequestsModule,
     FinesModule,
-    AuditModule
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [
@@ -39,7 +41,7 @@ import { AppService } from './app.service';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
-    }
+    },
   ],
 })
-export class AppModule { }
+export class AppModule {}

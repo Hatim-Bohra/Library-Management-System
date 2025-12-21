@@ -7,13 +7,13 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 @ApiTags('Audit')
 @Controller('audit')
 export class AuditController {
-    constructor(private readonly auditService: AuditService) { }
+  constructor(private readonly auditService: AuditService) {}
 
-    @ApiOperation({ summary: 'Get audit logs' })
-    @ApiResponse({ status: 200, description: 'List of audit logs.' })
-    @Get()
-    @Roles(Role.ADMIN)
-    findAll() {
-        return this.auditService.findAll();
-    }
+  @ApiOperation({ summary: 'Get audit logs' })
+  @ApiResponse({ status: 200, description: 'List of audit logs.' })
+  @Get()
+  @Roles(Role.ADMIN)
+  findAll() {
+    return this.auditService.findAll();
+  }
 }
