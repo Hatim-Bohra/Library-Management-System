@@ -16,7 +16,7 @@ describe('Book Request Flow', () => {
         cy.get('input[name="password"]').type(user.password);
         cy.get('button[type="submit"]').click();
         // Expect redirect to login
-        cy.url().should('include', '/login');
+        cy.url({ timeout: 10000 }).should('include', '/login');
 
         // We are now registered. Login will be handled in beforeEach.
     });

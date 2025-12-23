@@ -6,13 +6,13 @@ import { CreateAuthorDto, UpdateAuthorDto } from './dto';
 export class AuthorsService {
     constructor(private prisma: PrismaService) { }
 
-    async create(createAuthorDto: CreateAuthorDto) {
+    create(createAuthorDto: CreateAuthorDto) {
         return this.prisma.author.create({
             data: createAuthorDto,
         });
     }
 
-    async findAll() {
+    findAll() {
         return this.prisma.author.findMany({
             orderBy: { name: 'asc' },
         });

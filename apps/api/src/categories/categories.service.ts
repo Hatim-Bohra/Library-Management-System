@@ -6,13 +6,13 @@ import { CreateCategoryDto, UpdateCategoryDto } from './dto';
 export class CategoriesService {
     constructor(private prisma: PrismaService) { }
 
-    async create(createCategoryDto: CreateCategoryDto) {
+    create(createCategoryDto: CreateCategoryDto) {
         return this.prisma.category.create({
             data: createCategoryDto,
         });
     }
 
-    async findAll() {
+    findAll() {
         return this.prisma.category.findMany({
             orderBy: { name: 'asc' },
         });
