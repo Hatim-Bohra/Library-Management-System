@@ -20,9 +20,9 @@ export class DashboardService {
 
         return [
             { title: "Total Books", value: totalBooks.toLocaleString(), icon: "Book", color: "text-blue-500", link: "/dashboard/books" },
-            { title: "Active Members", value: activeMembers.toLocaleString(), icon: "Users", color: "text-green-500", link: "/dashboard/admin/users" }, // Admin only link really, but dashboard handles visibility
-            { title: "Active Loans", value: activeLoans.toLocaleString(), icon: "Repeat", color: "text-orange-500", link: "/dashboard/loans" },
-            { title: "Overdue Books", value: overdueBooks.toLocaleString(), icon: "AlertCircle", color: "text-red-500", link: "/dashboard/loans?status=overdue" },
+            { title: "Active Members", value: activeMembers.toLocaleString(), icon: "Users", color: "text-green-500", link: "/dashboard/members" },
+            { title: "Active Loans", value: activeLoans.toLocaleString(), icon: "Repeat", color: "text-orange-500", link: "/dashboard/circulation" },
+            { title: "Overdue Books", value: overdueBooks.toLocaleString(), icon: "AlertCircle", color: "text-red-500", link: "/dashboard/circulation" },
         ];
     }
 }

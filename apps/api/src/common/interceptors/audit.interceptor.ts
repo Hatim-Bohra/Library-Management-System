@@ -49,10 +49,10 @@ export class AuditInterceptor implements NestInterceptor {
 
             await this.auditService
               .log(
+                user.sub, // userId
                 auditMetadata.action,
                 auditMetadata.entityType || 'UNKNOWN',
                 entityId,
-                user.sub, // Assuming sub is the userId based on tokens.type.ts
                 details,
               )
               .catch((err: any) => console.error('Audit Log Failed', err));

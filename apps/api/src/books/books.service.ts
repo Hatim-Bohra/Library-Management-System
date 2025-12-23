@@ -137,14 +137,16 @@ export class BooksService {
   }
 
   async checkAvailability(bookId: string) {
-    const book = await this.prisma.book.findUnique({ where: { id: bookId } });
-    if (!book) return;
+    const availableCount = await this.prisma.inventoryItem.count({
+      where: {
+        bookId,
+        status: 'AVAILABLE',
+      },
+    });
 
-    if (book.copies === 0 && book.isAvailable) {
-      await this.prisma.book.update({
-        where: { id: bookId },
-        data: { isAvailable: false },
-      });
-    }
+    await this.prisma.book.update({
+      where: { id: bookId },
+      data: { isAvailable: availableCount > 0 },
+    });
   }
 }

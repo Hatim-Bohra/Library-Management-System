@@ -17,24 +17,18 @@ import {
 } from '@repo/database';
 import { FinesService } from '../fines/fines.service';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { BooksService } from '../books/books.service';
 
 @Injectable()
 export class RequestsService {
   constructor(
     private prisma: PrismaService,
     private finesService: FinesService,
+    private booksService: BooksService,
   ) { }
 
   async create(userId: string, createRequestDto: CreateRequestDto) {
     const { bookId, type, address } = createRequestDto;
-
-    // Check if book exists
-    const book = await this.prisma.book.findUnique({
-      where: { id: bookId },
-    });
-    if (!book) {
-      throw new NotFoundException('Book not found');
-    }
 
     // Check availability
     const availableCopies = await this.prisma.inventoryItem.count({
@@ -46,6 +40,14 @@ export class RequestsService {
 
     if (availableCopies === 0) {
       throw new BadRequestException('No copies available for request');
+    }
+
+    // Check if book exists
+    const book = await this.prisma.book.findUnique({
+      where: { id: bookId },
+    });
+    if (!book) {
+      throw new NotFoundException('Book not found');
     }
 
     // Check if user already has a pending request for this book
@@ -113,7 +115,7 @@ export class RequestsService {
     }
 
     // Transaction: Find available copy, reserve it, approve request
-    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const availableCopy = await tx.inventoryItem.findFirst({
         where: {
           bookId: request.bookId,
@@ -127,10 +129,6 @@ export class RequestsService {
         );
       }
 
-      // Reserve the copy - Optimistic Locking
-      // We ensure it is STILL available at the moment of update.
-      // If another transaction reserved it in the meantime, this will throw P2025 (Record Not Found)
-      // preventing double booking.
       await tx.inventoryItem.update({
         where: {
           id: availableCopy.id,
@@ -148,6 +146,11 @@ export class RequestsService {
         },
       });
     });
+
+    // Update availability
+    await this.booksService.checkAvailability(request.bookId);
+
+    return result;
   }
 
   async reject(id: string, rejectRequestDto: RejectRequestDto) {

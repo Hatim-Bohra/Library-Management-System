@@ -8,5 +8,6 @@ import { InventoryModule } from '../inventory/inventory.module';
   imports: [DatabaseModule, InventoryModule],
   controllers: [BooksController],
   providers: [BooksService],
+  exports: [BooksService],
 })
 export class BooksModule { }
