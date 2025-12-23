@@ -25,14 +25,14 @@ import { GetBooksQueryDto } from './dto/get-books-query.dto';
 @ApiTags('Books')
 @Controller('books')
 export class BooksController {
-  constructor(private readonly booksService: BooksService) {}
+  constructor(private readonly booksService: BooksService) { }
 
   @Roles(Role.ADMIN, Role.LIBRARIAN)
   @ApiBearerAuth()
   @Post()
   @ApiOperation({ summary: 'Create a new book (Admin/Librarian)' })
-  create(@Body() createBookDto: CreateBookDto) {
-    return this.booksService.create(createBookDto);
+  create(@Body() createBookDto: CreateBookDto, @GetCurrentUserId() userId: string) {
+    return this.booksService.create(createBookDto, userId);
   }
 
   @Public()

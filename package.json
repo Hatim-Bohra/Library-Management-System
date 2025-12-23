@@ -16,6 +16,7 @@
     "@commitlint/cli": "^18.4.0",
     "@commitlint/config-conventional": "^18.4.0",
     "@types/bcrypt": "^6.0.0",
+    "@types/node": "^25.0.3",
     "@types/passport-jwt": "^4.0.1",
     "husky": "^8.0.3",
     "lint-staged": "^15.1.0",

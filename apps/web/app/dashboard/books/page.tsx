@@ -16,7 +16,7 @@ export default function BooksPage() {
     const { data: books, isLoading, error } = useQuery({
         queryKey: ['books', search],
         queryFn: async () => {
-            const { data } = await api.get('/books', { params: { search } });
+            const { data } = await api.get('/books', { params: { q: search } });
             return data;
         }
     });

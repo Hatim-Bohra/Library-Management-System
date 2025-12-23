@@ -6,7 +6,7 @@ export interface Book {
     isbn: string;
     publishedYear: number;
     copies: number;
-    authorId: string;
+    authorName: string;
     categoryId: string;
 }
 

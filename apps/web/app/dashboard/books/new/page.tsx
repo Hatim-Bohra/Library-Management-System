@@ -25,7 +25,7 @@ const formSchema = z.object({
     publishedYear: z.coerce.number().min(1000),
     copies: z.coerce.number().min(1),
     // Mocks for now as we don't have separate Author/Category UI yet
-    authorId: z.string().uuid(),
+    authorName: z.string().min(1),
     categoryId: z.string().uuid(),
 });
 
@@ -40,7 +40,7 @@ export default function AddBookPage() {
             isbn: '',
             publishedYear: 2024,
             copies: 1,
-            authorId: '00000000-0000-0000-0000-000000000000', // Placeholder
+            authorName: 'Unknown Author', // Placeholder
             categoryId: '00000000-0000-0000-0000-000000000000', // Placeholder
         },
     });
@@ -125,7 +125,7 @@ export default function AddBookPage() {
                         />
 
                         {/* Hidden fields for Author/Category mocks */}
-                        <input type="hidden" {...form.register('authorId')} />
+                        <input type="hidden" {...form.register('authorName')} />
                         <input type="hidden" {...form.register('categoryId')} />
 
                         <div className="flex gap-4">

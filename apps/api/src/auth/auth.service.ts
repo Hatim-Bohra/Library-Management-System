@@ -25,7 +25,7 @@ export class AuthService {
           password: hash,
           firstName: dto.firstName,
           lastName: dto.lastName,
-          role: 'ADMIN', // Defaulting to ADMIN for now for testing, or MEMBER
+          role: 'MEMBER', // Default to MEMBER for security
         },
       });
 
@@ -120,7 +120,7 @@ export class AuthService {
         },
         {
           secret: this.config.get<string>('JWT_ACCESS_SECRET'),
-          expiresIn: '15m',
+          expiresIn: '1d',
         },
       ),
       this.jwtService.signAsync(

@@ -11,7 +11,10 @@ async function bootstrap() {
 
   app.enableCors(); // Critical for frontend access
   app.use(helmet());
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe({
+    transform: true,
+    transformOptions: { enableImplicitConversion: true },
+  }));
   app.useGlobalFilters(new HttpExceptionFilter());
 
   const config = new DocumentBuilder()

@@ -4,18 +4,58 @@ import { CreateBookDto, UpdateBookDto } from './dto';
 import { Book } from '@prisma/client';
 import { GetBooksQueryDto } from './dto/get-books-query.dto';
 
+import { InventoryService } from '../inventory/inventory.service';
+
 @Injectable()
 export class BooksService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private inventoryService: InventoryService,
+  ) { }
 
-  async create(dto: CreateBookDto): Promise<Book> {
-    const book = await this.prisma.book.create({
-      data: {
-        ...dto,
-      },
-    });
-    await this.checkAvailability(book.id);
-    return book;
+  async create(dto: CreateBookDto, userId: string): Promise<Book> {
+    const { authorName, copies, ...bookData } = dto;
+
+    try {
+      let author = await this.prisma.author.findFirst({
+        where: { name: { equals: authorName, mode: 'insensitive' } },
+      });
+
+      if (!author) {
+        author = await this.prisma.author.create({
+          data: { name: authorName },
+        });
+      }
+
+      // Initialize with 0 copies
+      const createData = {
+        ...bookData,
+        authorId: author.id,
+        copies: 0,
+      };
+
+      const book = await this.prisma.book.create({
+        data: createData,
+      });
+
+      // Create Inventory Items
+      const copiesToCreate = copies || 1;
+      for (let i = 0; i < copiesToCreate; i++) {
+        await this.inventoryService.addCopy(book.id, {
+          barcode: `${book.isbn}-${i + 1}`,
+          location: 'Main Stacks',
+        }, userId);
+      }
+
+      await this.checkAvailability(book.id);
+
+      return this.findOne(book.id);
+    } catch (error) {
+      // Log the error for debugging but rethrow
+      // In production, use a Logger service
+      console.error('Error creating book:', error);
+      throw error;
+    }
   }
 
   findAll(query: { q?: string; page?: number; limit?: number }) {

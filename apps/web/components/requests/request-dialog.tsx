@@ -65,7 +65,7 @@ export function RequestDialog({ bookId, bookTitle, trigger }: RequestDialogProps
 
     const mutation = useMutation({
         mutationFn: async (values: z.infer<typeof formSchema>) => {
-            const { data } = await api.post('/requests/place', {
+            const { data } = await api.post('/requests', {
                 bookId,
                 type: values.type,
                 address: values.type === 'DELIVERY' ? values.address : undefined,

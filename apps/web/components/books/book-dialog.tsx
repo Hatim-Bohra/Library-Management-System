@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -27,37 +27,60 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import api from '@/lib/api';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+/* import api from '@/lib/api'; */ /* api imported in books.ts, verify usage */
+import { createBook } from '@/lib/books';
+import { getAuthors } from '@/lib/authors';
+import { getCategories } from '@/lib/categories';
 
 const formSchema = z.object({
     title: z.string().min(1, 'Title is required'),
     isbn: z.string().min(10, 'ISBN must be at least 10 characters'),
-    authorName: z.string().min(1, 'Author is required'),
+    authorName: z.string().min(1, 'Author Name is required'),
+    categoryId: z.string().min(1, 'Category is required'),
     publishedYear: z.coerce.number().min(1000, 'Invalid year'),
     copies: z.coerce.number().min(1, 'Must have at least 1 copy'),
     description: z.string().optional(),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 export function BookDialog() {
     const [open, setOpen] = useState(false);
     const queryClient = useQueryClient();
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm<FormValues>({
         resolver: zodResolver(formSchema) as any,
         defaultValues: {
             title: '',
             isbn: '',
             authorName: '',
-            publishedYear: 2024,
+            categoryId: '',
+            publishedYear: new Date().getFullYear(),
             copies: 1,
             description: '',
         },
     });
 
+    const { data: authors } = useQuery({
+        queryKey: ['authors'],
+        queryFn: getAuthors,
+    });
+
+    const { data: categories } = useQuery({
+        queryKey: ['categories'],
+        queryFn: getCategories,
+    });
+
     const mutation = useMutation({
         mutationFn: async (values: z.infer<typeof formSchema>) => {
-            const { data } = await api.post('/books', values);
-            return data;
+            return createBook(values);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['books'] });
@@ -68,7 +91,7 @@ export function BookDialog() {
         },
         onError: (error: any) => {
             console.error(error);
-            alert(`Failed to add book: ${error.response?.data?.message || 'Unknown error'}`);
+            alert(`Failed to add book: ${error.response?.data?.message || error.message || 'Unknown error'}`);
         },
     });
 
@@ -105,19 +128,48 @@ export function BookDialog() {
                                 </FormItem>
                             )}
                         />
-                        <FormField
-                            control={form.control}
-                            name="authorName"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Author</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="F. Scott Fitzgerald" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="authorName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Author Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="F. Scott Fitzgerald" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="categoryId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Category</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select category" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {categories?.map((category) => (
+                                                    <SelectItem key={category.id} value={category.id}>
+                                                        {category.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}

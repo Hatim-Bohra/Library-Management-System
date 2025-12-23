@@ -30,7 +30,7 @@ export class CreateBookDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  authorId!: string;
+  authorName!: string;
 
   @ApiProperty()
   @IsString()
