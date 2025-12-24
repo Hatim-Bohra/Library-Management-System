@@ -38,6 +38,7 @@ export default function AdminBooksPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead className="w-[50px]">Cover</TableHead>
                             <TableHead>Title</TableHead>
                             <TableHead>Author</TableHead>
                             <TableHead>ISBN</TableHead>
@@ -49,6 +50,19 @@ export default function AdminBooksPage() {
                     <TableBody>
                         {books?.map((book: any) => (
                             <TableRow key={book.id}>
+                                <TableCell>
+                                    {book.coverUrl ? (
+                                        <img
+                                            src={book.coverUrl.startsWith('http') ? book.coverUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${book.coverUrl}`}
+                                            alt="Cover"
+                                            className="h-10 w-8 object-cover rounded shadow-sm"
+                                        />
+                                    ) : (
+                                        <div className="h-10 w-8 bg-muted rounded flex items-center justify-center text-[8px] text-muted-foreground">
+                                            No
+                                        </div>
+                                    )}
+                                </TableCell>
                                 <TableCell className="font-medium">{book.title}</TableCell>
                                 <TableCell>{book.author.name}</TableCell>
                                 <TableCell>{book.isbn}</TableCell>
