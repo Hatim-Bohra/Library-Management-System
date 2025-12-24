@@ -1,11 +1,13 @@
-import { Controller, Get, Param, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Param, Delete, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { MembersService } from './members.service';
+import { Roles, GetCurrentUserId, GetCurrentUser } from '../auth/decorators';
+import { Role, User } from '@repo/database';
 
 @ApiTags('members')
 @Controller('members')
 export class MembersController {
-  constructor(private readonly membersService: MembersService) {}
+  constructor(private readonly membersService: MembersService) { }
 
   @Get()
   @ApiOperation({ summary: 'List all members' })
@@ -20,8 +22,10 @@ export class MembersController {
   }
 
   @Delete(':id')
+  @Roles(Role.ADMIN, Role.LIBRARIAN)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Remove a member' })
-  remove(@Param('id') id: string) {
-    return this.membersService.remove(id);
+  remove(@Param('id') id: string, @GetCurrentUser() user: any) {
+    return this.membersService.remove(id, user);
   }
 }

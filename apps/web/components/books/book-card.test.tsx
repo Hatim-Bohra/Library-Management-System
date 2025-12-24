@@ -23,7 +23,7 @@ describe('BookCard', () => {
         render(<BookCard book={mockBook} />);
         expect(screen.getByText('Test Book')).toBeDefined();
         expect(screen.getByText('Test Author')).toBeDefined();
-        expect(screen.getByText('5 copies in library')).toBeDefined();
+        expect(screen.getByText('0 available / 5 copies in library')).toBeDefined();
     });
 
     it('renders enabled request button when available', () => {

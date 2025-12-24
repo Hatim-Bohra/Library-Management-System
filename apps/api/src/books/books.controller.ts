@@ -63,10 +63,10 @@ export class BooksController {
     return this.booksService.update(id, updateBookDto, userId);
   }
 
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.LIBRARIAN)
   @ApiBearerAuth()
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete a book (Admin)' })
+  @ApiOperation({ summary: 'Delete a book (Admin/Librarian)' })
   remove(@Param('id') id: string) {
     return this.booksService.remove(id);
   }
