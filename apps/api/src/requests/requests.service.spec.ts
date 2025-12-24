@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RequestsService } from './requests.service';
+import { BooksService } from '../books/books.service';
 import { PrismaService } from '../database/prisma.service';
 import { FinesService } from '../fines/fines.service';
 import {
@@ -42,6 +43,10 @@ const mockFinesService = {
   getApplicableRule: jest.fn(),
 };
 
+const mockBooksService = {
+  checkAvailability: jest.fn(),
+};
+
 describe('RequestsService', () => {
   let service: RequestsService;
   let prisma: PrismaService;
@@ -57,6 +62,10 @@ describe('RequestsService', () => {
         {
           provide: FinesService,
           useValue: mockFinesService,
+        },
+        {
+          provide: BooksService,
+          useValue: mockBooksService,
         },
       ],
     }).compile();
@@ -165,6 +174,7 @@ describe('RequestsService', () => {
           }),
         }),
       );
+      expect(mockBooksService.checkAvailability).toHaveBeenCalledWith('book-1');
     });
   });
 });
