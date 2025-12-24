@@ -132,14 +132,21 @@ export function InventoryDialog({ bookId, bookTitle }: InventoryDialogProps) {
                                         <TableCell>{item.location}</TableCell>
                                         <TableCell>
                                             {item.status !== 'LOST' && item.status !== 'DAMAGED' && (
-                                                <div className="flex gap-2">
-                                                    <Button size="sm" variant="outline" onClick={() => statusMutation.mutate({ id: item.id, status: 'AVAILABLE' })}>
-                                                        Set Available
-                                                    </Button>
-                                                    <Button size="sm" variant="destructive" onClick={() => statusMutation.mutate({ id: item.id, status: 'LOST' })}>
-                                                        Mark Lost
-                                                    </Button>
-                                                </div>
+                                                <Select
+                                                    defaultValue={item.status}
+                                                    onValueChange={(value) => statusMutation.mutate({ id: item.id, status: value })}
+                                                >
+                                                    <SelectTrigger className="w-[130px] h-8">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="AVAILABLE">Available</SelectItem>
+                                                        <SelectItem value="ISSUED">Issued</SelectItem>
+                                                        <SelectItem value="LOST">Lost</SelectItem>
+                                                        <SelectItem value="DAMAGED">Damaged</SelectItem>
+                                                        <SelectItem value="RESERVED">Reserved</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
                                             )}
                                         </TableCell>
                                     </TableRow>

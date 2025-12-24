@@ -73,7 +73,7 @@ export class RequestsController {
   @ApiParam({ name: 'id', description: 'Request ID' })
   @Audit('APPROVE_REQUEST', 'BookRequest')
   @Patch(':id/approve')
-  @Roles(Role.LIBRARIAN)
+  @Roles(Role.ADMIN, Role.LIBRARIAN)
   approve(@Param('id') id: string) {
     return this.requestsService.approve(id);
   }
@@ -83,7 +83,7 @@ export class RequestsController {
   @ApiBody({ type: RejectRequestDto })
   @Audit('REJECT_REQUEST', 'BookRequest')
   @Patch(':id/reject')
-  @Roles(Role.LIBRARIAN)
+  @Roles(Role.ADMIN, Role.LIBRARIAN)
   reject(@Param('id') id: string, @Body() rejectRequestDto: RejectRequestDto) {
     return this.requestsService.reject(id, rejectRequestDto);
   }
@@ -98,7 +98,7 @@ export class RequestsController {
   })
   @Audit('COLLECT_REQUEST', 'BookRequest')
   @Patch(':id/collect')
-  @Roles(Role.LIBRARIAN)
+  @Roles(Role.ADMIN, Role.LIBRARIAN)
   collect(@Param('id') id: string) {
     return this.requestsService.collect(id);
   }
@@ -110,7 +110,7 @@ export class RequestsController {
   })
   @Audit('DISPATCH_REQUEST', 'BookRequest')
   @Patch(':id/dispatch')
-  @Roles(Role.LIBRARIAN)
+  @Roles(Role.ADMIN, Role.LIBRARIAN)
   dispatch(@Param('id') id: string) {
     return this.requestsService.dispatch(id);
   }
@@ -124,7 +124,7 @@ export class RequestsController {
   })
   @Audit('DELIVER_REQUEST', 'BookRequest')
   @Patch(':id/deliver')
-  @Roles(Role.LIBRARIAN)
+  @Roles(Role.ADMIN, Role.LIBRARIAN)
   deliver(@Param('id') id: string) {
     return this.requestsService.confirmDelivery(id);
   }
@@ -133,7 +133,7 @@ export class RequestsController {
   @ApiResponse({ status: 200, description: 'Delivery marked as failed.' })
   @Audit('FAIL_DELIVERY', 'BookRequest')
   @Patch(':id/delivery-fail')
-  @Roles(Role.LIBRARIAN)
+  @Roles(Role.ADMIN, Role.LIBRARIAN)
   failDelivery(
     @Param('id') id: string,
     @Body() rejectRequestDto: RejectRequestDto,

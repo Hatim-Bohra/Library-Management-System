@@ -21,7 +21,15 @@ WORKDIR /app
 # First install dependencies (as they change less often)
 COPY --from=builder /app/out/json/ .
 COPY --from=builder /app/out/package-lock.json ./package-lock.json
-RUN npm install
+COPY --from=builder /app/out/package-lock.json ./package-lock.json
+ENV NPM_CONFIG_UPDATE_NOTIFIER=false
+ENV NPM_CONFIG_FUND=false
+ENV NPM_CONFIG_FETCH_RETRIES=5
+ENV NPM_CONFIG_FETCH_RETRY_FACTOR=2
+ENV NPM_CONFIG_FETCH_RETRY_MINTIMEOUT=10000
+ENV NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT=60000
+RUN npm config set registry https://registry.npmjs.org/
+RUN --mount=type=cache,target=/root/.npm npm ci
 
 # Build the project and its dependencies
 COPY --from=builder /app/out/full/ .

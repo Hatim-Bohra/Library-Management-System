@@ -9,6 +9,7 @@ interface Book {
     author: { name: string };
     isAvailable: boolean;
     copies: number;
+    inventoryItems?: any[];
 }
 
 interface BookCardProps {
@@ -16,6 +17,8 @@ interface BookCardProps {
 }
 
 export function BookCard({ book }: BookCardProps) {
+    const availableCount = book.inventoryItems ? book.inventoryItems.filter((i: any) => i.status === 'AVAILABLE').length : 0;
+
     return (
         <Card className="flex flex-col h-full">
             <CardHeader>
@@ -25,13 +28,13 @@ export function BookCard({ book }: BookCardProps) {
                         <CardDescription>{book.author.name}</CardDescription>
                     </div>
                     <Badge variant={book.isAvailable ? 'default' : 'secondary'}>
-                        {book.isAvailable ? 'Available' : 'Out of Stock'}
+                        {availableCount > 0 ? 'Available' : 'Out of Stock'}
                     </Badge>
                 </div>
             </CardHeader>
             <CardContent className="flex-1">
                 <p className="text-sm text-muted-foreground">
-                    {book.copies} copies in library
+                    {availableCount} available / {book.copies} copies in library
                 </p>
             </CardContent>
             <CardFooter>
