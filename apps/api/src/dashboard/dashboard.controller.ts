@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { DashboardService } from './dashboard.service';
-import { Public } from '../auth/decorators';
+import { Public, GetCurrentUser } from '../auth/decorators';
 
 @ApiTags('Dashboard')
 @Controller('dashboard')
@@ -14,7 +14,7 @@ export class DashboardController {
     // Given user request "login time expired", they are logged in.
     @Get('stats')
     @ApiOperation({ summary: 'Get dashboard statistics' })
-    getStats() {
-        return this.dashboardService.getStats();
+    getStats(@GetCurrentUser() user: any) {
+        return this.dashboardService.getStats(user);
     }
 }

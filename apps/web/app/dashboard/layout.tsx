@@ -36,9 +36,13 @@ export default function DashboardLayout({
         { href: '/dashboard/admin/audit', label: 'Audit Logs', icon: Users, roles: ['ADMIN'] },
     ];
 
-    const navItems = allNavItems.filter(item =>
-        user && item.roles.includes(user.role)
-    );
+    // Always append Profile for everyone
+    const profileItem = { href: '/dashboard/profile', label: 'My Profile', icon: Users, roles: ['ADMIN', 'LIBRARIAN', 'MEMBER'] };
+
+    const navItems = [
+        ...allNavItems.filter(item => user && item.roles.includes(user.role)),
+        profileItem
+    ];
 
     const handleLogout = () => {
         logout();
