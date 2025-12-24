@@ -8,6 +8,7 @@ import { Book, Users, Repeat, LayoutDashboard, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/components/providers/auth-provider';
+import { NotificationBell } from '@/components/notification-bell';
 
 export default function DashboardLayout({
     children,
@@ -86,8 +87,11 @@ export default function DashboardLayout({
             </div>
             <div className="flex flex-col">
                 <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-gray-100/40 px-6 dark:bg-gray-800/40">
-                    <div className="w-full flex-1">
+                    <div className="flex w-full items-center justify-between">
                         <h1 className="text-lg font-semibold">Dashboard</h1>
+                        <div className="flex items-center gap-2">
+                            <NotificationBell />
+                        </div>
                     </div>
                 </header>
                 <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">

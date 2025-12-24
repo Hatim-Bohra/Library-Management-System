@@ -103,6 +103,15 @@ export class RequestsService {
     });
   }
 
+  async getPendingCount() {
+    const count = await this.prisma.bookRequest.count({
+      where: {
+        status: BookRequestStatus.PENDING,
+      },
+    });
+    return { count };
+  }
+
   async approve(id: string) {
 
     const request = (await this.prisma.bookRequest.findUnique({

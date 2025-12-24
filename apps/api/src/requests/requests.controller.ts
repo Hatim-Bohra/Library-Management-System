@@ -53,6 +53,14 @@ export class RequestsController {
     return this.requestsService.create(userId, createRequestDto);
   }
 
+  @ApiOperation({ summary: 'Get pending requests count (Admin/Librarian)' })
+  @ApiResponse({ status: 200, description: 'Count of pending requests.' })
+  @Get('pending-count')
+  @Roles(Role.ADMIN, Role.LIBRARIAN)
+  getPendingCount() {
+    return this.requestsService.getPendingCount();
+  }
+
   @ApiOperation({
     summary: 'Get all requests (Admin/Librarian) or User requests',
   })
