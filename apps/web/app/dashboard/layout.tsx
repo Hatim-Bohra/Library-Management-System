@@ -16,24 +16,33 @@ export default function DashboardLayout({
 }) {
     const pathname = usePathname();
     const router = useRouter();
-    const { logout } = useAuth(); // Use logout from context
+    const { user, logout } = useAuth(); // Use logout and user from context
+
+    // ... logic ...
+
+    const allNavItems = [
+        // Common
+        { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, roles: ['ADMIN', 'LIBRARIAN', 'MEMBER'] },
+        { href: '/dashboard/books', label: 'Books', icon: Book, roles: ['ADMIN', 'LIBRARIAN', 'MEMBER'] },
+        { href: '/dashboard/requests', label: 'My Requests', icon: Repeat, roles: ['MEMBER'] },
+        { href: '/dashboard/my-loans', label: 'My Loans', icon: Users, roles: ['MEMBER'] },
+
+        // Admin/Librarian
+        { href: '/dashboard/admin/books', label: 'Manage Books', icon: Book, roles: ['ADMIN', 'LIBRARIAN'] },
+        { href: '/dashboard/admin/requests', label: 'Manage Requests', icon: Repeat, roles: ['ADMIN', 'LIBRARIAN'] },
+
+        // Admin Only
+        { href: '/dashboard/admin/fines', label: 'Fine Rules', icon: Users, roles: ['ADMIN'] },
+        { href: '/dashboard/admin/audit', label: 'Audit Logs', icon: Users, roles: ['ADMIN'] },
+    ];
+
+    const navItems = allNavItems.filter(item =>
+        user && item.roles.includes(user.role)
+    );
 
     const handleLogout = () => {
-        logout(); // Call context logout
+        logout();
     };
-
-    const navItems = [
-        { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-        { href: '/dashboard/books', label: 'Books', icon: Book },
-        { href: '/dashboard/requests', label: 'My Requests', icon: Repeat },
-        { href: '/dashboard/my-loans', label: 'My Loans', icon: Users },
-
-        // Admin
-        { href: '/dashboard/admin/books', label: 'Manage Books', icon: Book },
-        { href: '/dashboard/admin/requests', label: 'Manage Requests', icon: Repeat },
-        { href: '/dashboard/admin/fines', label: 'Fine Rules', icon: Users },
-        { href: '/dashboard/admin/audit', label: 'Audit Logs', icon: Users },
-    ];
 
     return (
         <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
