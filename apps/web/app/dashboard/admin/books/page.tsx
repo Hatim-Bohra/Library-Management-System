@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 
 import { BookDialog } from '@/components/books/book-dialog';
+import { InventoryDialog } from '@/components/books/inventory-dialog';
 
 export default function AdminBooksPage() {
     const { data: books, isLoading } = useQuery({
@@ -53,9 +54,9 @@ export default function AdminBooksPage() {
                                 <TableCell>{book.isbn}</TableCell>
                                 <TableCell>{book.copies || book.inventory?.length || 0}</TableCell>
                                 <TableCell>{book.isAvailable ? 'Yes' : 'No'}</TableCell>
-                                <TableCell className="text-right">
-                                    <Button variant="ghost" size="sm">Edit</Button>
-                                    <Button variant="ghost" size="sm">Inventory</Button>
+                                <TableCell className="text-right flex justify-end gap-2">
+                                    <BookDialog initialData={book} />
+                                    <InventoryDialog bookId={book.id} bookTitle={book.title} />
                                 </TableCell>
                             </TableRow>
                         ))}

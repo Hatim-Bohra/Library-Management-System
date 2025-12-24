@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import api from '@/lib/api';
 import {
     Table,
@@ -26,17 +27,29 @@ export default function AdminRequestsPage() {
 
     const approveMutation = useMutation({
         mutationFn: async (id: string) => api.patch(`/requests/${id}/approve`),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-requests'] })
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-requests'] });
+            toast.success('Request approved');
+        },
+        onError: () => toast.error('Failed to approve request')
     });
 
     const rejectMutation = useMutation({
         mutationFn: async (id: string) => api.patch(`/requests/${id}/reject`, { reason: 'Admin rejected' }),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-requests'] })
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-requests'] });
+            toast.success('Request rejected');
+        },
+        onError: () => toast.error('Failed to reject request')
     });
 
     const dispatchMutation = useMutation({
         mutationFn: async (id: string) => api.patch(`/requests/${id}/dispatch`),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-requests'] })
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-requests'] });
+            toast.success('Request dispatched');
+        },
+        onError: () => toast.error('Failed to dispatch request')
     });
 
     // Pickup: Collect, Delivery: Confirm Delivery
@@ -45,7 +58,11 @@ export default function AdminRequestsPage() {
             if (type === 'DELIVERY') return api.patch(`/requests/${id}/deliver`);
             return api.patch(`/requests/${id}/collect`);
         },
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-requests'] })
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-requests'] });
+            toast.success('Request fulfilled');
+        },
+        onError: () => toast.error('Failed to fulfill request')
     });
 
     if (isLoading) return <div>Loading requests...</div>;

@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -34,8 +34,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-/* import api from '@/lib/api'; */ /* api imported in books.ts, verify usage */
-import { createBook } from '@/lib/books';
+import { createBook, updateBook, Book } from '@/lib/books';
 import { getAuthors } from '@/lib/authors';
 import { getCategories } from '@/lib/categories';
 
@@ -45,13 +44,17 @@ const formSchema = z.object({
     authorName: z.string().min(1, 'Author Name is required'),
     categoryId: z.string().min(1, 'Category is required'),
     publishedYear: z.coerce.number().min(1000, 'Invalid year'),
-    copies: z.coerce.number().min(1, 'Must have at least 1 copy'),
+    copies: z.coerce.number().min(0, 'Must have at least 0 copies'), // Allow 0 for updates
     description: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function BookDialog() {
+interface BookDialogProps {
+    initialData?: Book;
+}
+
+export function BookDialog({ initialData }: BookDialogProps) {
     const [open, setOpen] = useState(false);
     const queryClient = useQueryClient();
 
@@ -68,6 +71,33 @@ export function BookDialog() {
         },
     });
 
+    // Reset form when initialData changes or dialog opens
+    useEffect(() => {
+        if (open) {
+            if (initialData) {
+                form.reset({
+                    title: initialData.title,
+                    isbn: initialData.isbn,
+                    authorName: initialData.authorName, // Assuming flattened structure or handle mismatch
+                    categoryId: initialData.categoryId,
+                    publishedYear: initialData.publishedYear,
+                    copies: initialData.copies,
+                    description: '', // If book has description, add it to interface
+                });
+            } else {
+                form.reset({
+                    title: '',
+                    isbn: '',
+                    authorName: '',
+                    categoryId: '',
+                    publishedYear: new Date().getFullYear(),
+                    copies: 1,
+                    description: '',
+                });
+            }
+        }
+    }, [open, initialData, form]);
+
     const { data: authors } = useQuery({
         queryKey: ['authors'],
         queryFn: getAuthors,
@@ -80,18 +110,21 @@ export function BookDialog() {
 
     const mutation = useMutation({
         mutationFn: async (values: z.infer<typeof formSchema>) => {
+            if (initialData) {
+                return updateBook(initialData.id, values);
+            }
             return createBook(values);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['books'] });
             queryClient.invalidateQueries({ queryKey: ['admin-books'] });
             setOpen(false);
-            form.reset();
-            alert('Book added successfully!');
+            if (!initialData) form.reset();
+            alert(`Book ${initialData ? 'updated' : 'added'} successfully!`);
         },
         onError: (error: any) => {
             console.error(error);
-            alert(`Failed to add book: ${error.response?.data?.message || error.message || 'Unknown error'}`);
+            alert(`Failed to save book: ${error.response?.data?.message || error.message || 'Unknown error'}`);
         },
     });
 
@@ -102,15 +135,19 @@ export function BookDialog() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" /> Add Book
-                </Button>
+                {initialData ? (
+                    <Button variant="ghost" size="sm">Edit</Button>
+                ) : (
+                    <Button>
+                        <Plus className="mr-2 h-4 w-4" /> Add Book
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Add New Book</DialogTitle>
+                    <DialogTitle>{initialData ? 'Edit Book' : 'Add New Book'}</DialogTitle>
                     <DialogDescription>
-                        Enter the details of the new book here. Click save when you&apos;re done.
+                        {initialData ? 'Update the details of the book.' : 'Enter the details of the new book.'} Click save when you&apos;re done.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -150,7 +187,7 @@ export function BookDialog() {
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Category</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select category" />
@@ -205,25 +242,13 @@ export function BookDialog() {
                                 <FormItem>
                                     <FormLabel>Total Copies</FormLabel>
                                     <FormControl>
-                                        <Input type="number" placeholder="5" {...field} />
+                                        <Input type="number" placeholder="5" {...field} disabled={!!initialData} title={initialData ? "Manage copies in Inventory" : ""} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
-                        <FormField
-                            control={form.control}
-                            name="description"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Description</FormLabel>
-                                    <FormControl>
-                                        <Textarea placeholder="Book summary..." {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                        {/* Description field removed or optional based on schema/types */}
                         <DialogFooter>
                             <Button type="submit" disabled={mutation.isPending}>
                                 {mutation.isPending ? 'Saving...' : 'Save Book'}

@@ -27,6 +27,8 @@ services:
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-supersecret}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-supersecretrefresh}
       PORT: 3002
+      NPM_CONFIG_UPDATE_NOTIFIER: 'false'
+      NPM_CONFIG_FUND: 'false'
     command: >
       sh -c "npx prisma db push --schema=packages/database/prisma/schema.prisma && node apps/api/dist/main"
     ports:

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Dialog,
@@ -75,11 +76,12 @@ export function RequestDialog({ bookId, bookTitle, trigger }: RequestDialogProps
         onSuccess: () => {
             setOpen(false);
             form.reset();
-            alert('Request placed successfully!');
+            toast.success('Request placed successfully!');
             queryClient.invalidateQueries({ queryKey: ['requests'] });
+            queryClient.invalidateQueries({ queryKey: ['books'] });
         },
         onError: (error: any) => {
-            alert(error?.response?.data?.message || 'Failed to place request');
+            toast.error(error?.response?.data?.message || 'Failed to place request');
         }
     });
 
