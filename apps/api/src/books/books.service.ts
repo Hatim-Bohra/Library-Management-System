@@ -58,24 +58,31 @@ export class BooksService {
     }
   }
 
-  findAll(query: { q?: string; page?: number; limit?: number }) {
-    const { q, page = 1, limit = 10 } = query;
+  findAll(query: GetBooksQueryDto) {
+    const { q, categoryId, page = 1, limit = 10 } = query;
     const skip = (page - 1) * limit;
+
+    const where: any = {};
+
+    if (q) {
+      where.OR = [
+        { title: { contains: q, mode: 'insensitive' } },
+        { author: { name: { contains: q, mode: 'insensitive' } } },
+        { isbn: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
 
     return this.prisma.book.findMany({
       skip,
-      take: limit,
-      where: q
-        ? {
-          OR: [
-            { title: { contains: q, mode: 'insensitive' } },
-            { author: { name: { contains: q, mode: 'insensitive' } } },
-            { isbn: { contains: q, mode: 'insensitive' } },
-          ],
-        }
-        : undefined,
+      take: Number(limit),
+      where,
       include: {
         author: true,
+        category: true,
         inventoryItems: true,
       },
     });

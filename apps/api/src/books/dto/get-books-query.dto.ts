@@ -5,4 +5,8 @@ export class GetBooksQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
   q?: string;
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
 }
