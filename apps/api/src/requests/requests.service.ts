@@ -76,14 +76,24 @@ export class RequestsService {
     });
   }
 
-  findAll(role: Role, userId: string, query?: PaginationQueryDto) {
-    const { page = 1, limit = 10 } = query || {};
+  findAll(role: Role, userId: string, query?: any) {
+    const { page = 1, limit = 10, status } = query || {};
     const skip = (page - 1) * limit;
+
+    const where: any = {};
+
+    if (status) {
+      const statuses = status.split(',').map((s: string) => s.trim());
+      if (statuses.length > 0) {
+        where.status = { in: statuses };
+      }
+    }
 
     if (role === Role.LIBRARIAN || role === Role.ADMIN) {
       return this.prisma.bookRequest.findMany({
         skip,
-        take: limit,
+        take: Number(limit),
+        where,
         include: {
           book: true,
           user: true,
@@ -92,10 +102,14 @@ export class RequestsService {
       });
     }
 
+    // For regular users, force userId check
     return this.prisma.bookRequest.findMany({
       skip,
-      take: limit,
-      where: { userId },
+      take: Number(limit),
+      where: {
+        userId,
+        ...where
+      },
       include: {
         book: true,
       },

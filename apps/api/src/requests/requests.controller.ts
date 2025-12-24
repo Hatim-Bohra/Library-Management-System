@@ -26,6 +26,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { GetRequestsQueryDto } from './dto/get-requests-query.dto';
 
 @ApiTags('Requests')
 @UseInterceptors(AuditInterceptor)
@@ -68,7 +69,7 @@ export class RequestsController {
   @Get()
   findAll(
     @GetCurrentUser() user: JwtPayload,
-    @Query() query: PaginationQueryDto,
+    @Query() query: GetRequestsQueryDto,
   ) {
     return this.requestsService.findAll(user.role, user.sub, query);
   }
