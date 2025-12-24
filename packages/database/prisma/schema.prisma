@@ -42,6 +42,7 @@ model Book {
   isAvailable Boolean  @default(true)
   description String?
   price       Decimal  @default(0.0)
+  coverUrl    String?
   
   authorId    String
   author      Author   @relation(fields: [authorId], references: [id])

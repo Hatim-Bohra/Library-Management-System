@@ -6,11 +6,21 @@ import { AppModule } from './app.module';
 
 import helmet from 'helmet';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
+// ...
 
-  app.enableCors(); // Critical for frontend access
-  app.use(helmet());
+async function bootstrap() {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  app.enableCors();
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  }));
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
+  });
+
   app.useGlobalPipes(new ValidationPipe({
     transform: true,
     transformOptions: { enableImplicitConversion: true },

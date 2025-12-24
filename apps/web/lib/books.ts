@@ -8,6 +8,7 @@ export interface Book {
     copies: number;
     authorName: string;
     categoryId: string;
+    coverUrl?: string;
 }
 
 export const getBooks = async (): Promise<Book[]> => {

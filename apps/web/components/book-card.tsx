@@ -16,9 +16,17 @@ export function BookCard({ book }: BookCardProps) {
         <Card className="flex flex-col h-full overflow-hidden transition-all hover:shadow-lg">
             <div className="aspect-[2/3] w-full bg-muted relative">
                 {/* Placeholder for now. Ideally <Image /> */}
-                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-gray-100 dark:bg-gray-800">
-                    <span className="text-4xl font-bold opacity-20">Book</span>
-                </div>
+                {book.coverUrl ? (
+                    <img
+                        src={book.coverUrl.startsWith('http') ? book.coverUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${book.coverUrl}`}
+                        alt={book.title}
+                        className="w-full h-full object-cover transition-transform hover:scale-105"
+                    />
+                ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-gray-100 dark:bg-gray-800">
+                        <span className="text-4xl font-bold opacity-20">Book</span>
+                    </div>
+                )}
                 {!isAvailable && (
                     <div className="absolute top-2 right-2">
                         <Badge variant="destructive">Unavailable</Badge>
