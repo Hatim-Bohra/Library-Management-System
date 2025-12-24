@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getMembers, Member } from '@/lib/members';
 import { columns } from './columns';
 import { DataTable } from '@/components/ui/data-table';
+import { UserDialog } from '@/components/users/user-dialog';
 
 export default function MembersPage() {
     const { data, isLoading, error } = useQuery<Member[]>({
@@ -18,6 +19,7 @@ export default function MembersPage() {
         <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-bold tracking-tight">Members</h2>
+                <UserDialog />
             </div>
             <DataTable columns={columns} data={data || []} />
         </div>

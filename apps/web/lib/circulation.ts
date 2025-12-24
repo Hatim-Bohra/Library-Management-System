@@ -19,7 +19,7 @@ export interface Loan {
 }
 
 export const getLoans = async (): Promise<Loan[]> => {
-    const response = await api.get('/circulation');
+    const response = await api.get('/circulation/loans');
     return response.data;
 };
 

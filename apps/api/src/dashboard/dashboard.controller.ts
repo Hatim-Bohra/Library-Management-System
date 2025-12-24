@@ -8,10 +8,7 @@ import { Public, GetCurrentUser } from '../auth/decorators';
 export class DashboardController {
     constructor(private readonly dashboardService: DashboardService) { }
 
-    @Public() // Or guarded, but for now we let users see stats or we can guard it. Let's make it authenticated by default in main config, but here explicitly maybe?
-    // Actually dashboard stats might be private. Let's assume authenticated user.
-    // Removing @Public() to inherit global guard if set, or we can leave it if we want public stats.
-    // Given user request "login time expired", they are logged in.
+    // Authenticated access only
     @Get('stats')
     @ApiOperation({ summary: 'Get dashboard statistics' })
     getStats(@GetCurrentUser() user: any) {

@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import {
     Dialog,
     DialogContent,
@@ -185,7 +186,7 @@ export function BookDialog({ initialData }: BookDialogProps) {
                         <div className="flex gap-4">
                             {/* Left Column: Image Upload */}
                             <div className="w-1/3 space-y-2">
-                                <FormLabel>Cover Image</FormLabel>
+                                <Label>Cover Image</Label>
                                 <div className="border rounded-md aspect-[2/3] flex items-center justify-center bg-muted overflow-hidden relative group">
                                     {coverUrl ? (
                                         // Use img tag for simplicity, serving from API
@@ -196,7 +197,7 @@ export function BookDialog({ initialData }: BookDialogProps) {
                                         // Next.js Image component needs absolute or configured domain.
                                         // Using standard img for now.
                                         <img
-                                            src={coverUrl.startsWith('http') ? coverUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${coverUrl}`}
+                                            src={(coverUrl || '').startsWith('http') ? coverUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${coverUrl}`}
                                             alt="Cover"
                                             className="w-full h-full object-cover"
                                         />
@@ -261,7 +262,7 @@ export function BookDialog({ initialData }: BookDialogProps) {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                    {categories?.map((category) => (
+                                                    {Array.isArray(categories) && categories.map((category) => (
                                                         <SelectItem key={category.id} value={category.id}>
                                                             {category.name}
                                                         </SelectItem>

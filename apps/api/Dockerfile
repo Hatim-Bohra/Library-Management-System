@@ -48,6 +48,10 @@ WORKDIR /app
 RUN apk add --no-cache openssl
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nestjs
+
+# Ensure uploads directory exists and is writable
+RUN mkdir -p /app/uploads && chown nestjs:nodejs /app/uploads
+
 USER nestjs
 
 COPY --from=installer --chown=nestjs:nodejs /app .

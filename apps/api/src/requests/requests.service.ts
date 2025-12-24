@@ -30,16 +30,30 @@ export class RequestsService {
   async create(userId: string, createRequestDto: CreateRequestDto) {
     const { bookId, type, address } = createRequestDto;
 
-    // Check availability
-    const availableCopies = await this.prisma.inventoryItem.count({
-      where: {
-        bookId,
-        status: ItemStatus.AVAILABLE,
-      },
-    });
+    // Validate Request Type specific logic
+    if (type === BookRequestType.RETURN) {
+      const activeLoan = await this.prisma.loan.findFirst({
+        where: {
+          userId,
+          bookId,
+          status: LoanStatus.ACTIVE
+        }
+      });
+      if (!activeLoan) {
+        throw new BadRequestException('No active loan found for this book');
+      }
+    } else {
+      // Check availability for PICKUP/DELIVERY
+      const availableCopies = await this.prisma.inventoryItem.count({
+        where: {
+          bookId,
+          status: ItemStatus.AVAILABLE,
+        },
+      });
 
-    if (availableCopies === 0) {
-      throw new BadRequestException('No copies available for request');
+      if (availableCopies === 0) {
+        throw new BadRequestException('No copies available for request');
+      }
     }
 
     // Check if book exists
@@ -139,6 +153,52 @@ export class RequestsService {
 
     // Transaction: Find available copy, reserve it, approve request
     const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+
+      if (request.type === BookRequestType.RETURN) {
+        // 1. Find Active Loan
+        const loan = await tx.loan.findFirst({
+          where: {
+            userId: request.userId,
+            bookId: request.bookId,
+            status: LoanStatus.ACTIVE
+          }
+        });
+
+        if (!loan) throw new BadRequestException('No active loan to return');
+
+        // 2. Mark Loan as Returned
+        await tx.loan.update({
+          where: { id: loan.id },
+          data: {
+            status: LoanStatus.RETURNED,
+            returnedAt: new Date()
+          }
+        });
+
+        // 3. Update Inventory (Find an ISSUED item and make it AVAILABLE)
+        // Ideally we know exactly which item, but for now we pick one.
+        const issuedItem = await tx.inventoryItem.findFirst({
+          where: {
+            bookId: request.bookId,
+            status: ItemStatus.ISSUED
+          }
+        });
+
+        if (issuedItem) {
+          await tx.inventoryItem.update({
+            where: { id: issuedItem.id },
+            data: { status: ItemStatus.AVAILABLE }
+          });
+        }
+
+        // 4. Fulfillment
+        return tx.bookRequest.update({
+          where: { id },
+          data: { status: BookRequestStatus.FULFILLED }
+        });
+      }
+
+      // Normal Borrow Flow
       const availableCopy = await tx.inventoryItem.findFirst({
         where: {
           bookId: request.bookId,

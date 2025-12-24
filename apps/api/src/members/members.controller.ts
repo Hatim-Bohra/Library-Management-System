@@ -1,13 +1,22 @@
-import { Controller, Get, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Delete, Post, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { MembersService } from './members.service';
 import { Roles, GetCurrentUserId, GetCurrentUser } from '../auth/decorators';
 import { Role, User } from '@repo/database';
+import { CreateMemberDto } from './dto';
 
 @ApiTags('members')
 @Controller('members')
 export class MembersController {
   constructor(private readonly membersService: MembersService) { }
+
+  @Post()
+  @Roles(Role.ADMIN, Role.LIBRARIAN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new user (Admin/Librarian)' })
+  create(@Body() dto: CreateMemberDto, @GetCurrentUser() currentUser: any) {
+    return this.membersService.create(dto, currentUser);
+  }
 
   @Get()
   @ApiOperation({ summary: 'List all members' })

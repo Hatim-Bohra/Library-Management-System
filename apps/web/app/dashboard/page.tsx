@@ -36,7 +36,7 @@ export default function DashboardPage() {
 
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {stats?.map((stat: any, index: number) => {
+            {Array.isArray(stats) && stats.map((stat: any, index: number) => {
                 const Icon = iconMap[stat.icon] || Book;
                 return (
                     <Link href={stat.link} key={index}>

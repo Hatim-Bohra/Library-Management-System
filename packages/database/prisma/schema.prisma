@@ -224,4 +224,5 @@ enum BookRequestStatus {
 enum BookRequestType {
   PICKUP
   DELIVERY
+  RETURN
 }

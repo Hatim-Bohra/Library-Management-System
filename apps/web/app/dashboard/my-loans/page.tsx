@@ -11,7 +11,38 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { createRequest, BookRequestType } from '@/lib/requests';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { Loader2 } from 'lucide-react';
+
+function ReturnButton({ bookId }: { bookId: string }) {
+    const queryClient = useQueryClient();
+    const mutation = useMutation({
+        mutationFn: () => createRequest({ bookId, type: BookRequestType.RETURN }),
+        onSuccess: () => {
+            toast.success('Return request submitted');
+            queryClient.invalidateQueries({ queryKey: ['loans'] }); // Re-fetch loans if desired, though request is separate
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || 'Failed to submit return request');
+        }
+    });
+
+    return (
+        <Button
+            size="sm"
+            variant="outline"
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending}
+        >
+            {mutation.isPending && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+            Return
+        </Button>
+    );
+}
 
 export default function LoansPage() {
     // Determine the user's loans. The API endpoint GET /circulation/loans needs to handle member role automatically.
@@ -42,6 +73,7 @@ export default function LoansPage() {
                             <TableHead>Due Date</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Fines</TableHead>
+                            <TableHead>Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -56,8 +88,12 @@ export default function LoansPage() {
                                     </Badge>
                                 </TableCell>
                                 <TableCell>
-                                    {/* If your API returned calculated fines, display here. Else 'N/A' for now or fetch separate */}
                                     {loan.fines?.reduce((acc: number, fine: any) => acc + Number(fine.amount), 0) || 0}
+                                </TableCell>
+                                <TableCell>
+                                    {loan.status === 'ACTIVE' && (
+                                        <ReturnButton bookId={loan.bookId} />
+                                    )}
                                 </TableCell>
                             </TableRow>
                         ))}
