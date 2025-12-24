@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateLoanDto } from './dto/create-loan.dto';
+import { JwtPayload } from '../auth/types/jwtPayload.type';
 
 @Injectable()
 export class CirculationService {
@@ -38,12 +39,23 @@ export class CirculationService {
     });
   }
 
-  findAll() {
+  findAll(user: JwtPayload) {
+    if (user.role === 'ADMIN' || user.role === 'LIBRARIAN') {
+      return this.prisma.loan.findMany({
+        include: {
+          book: true,
+          user: true,
+        },
+        orderBy: { borrowedAt: 'desc' },
+      });
+    }
+
     return this.prisma.loan.findMany({
+      where: { userId: user.sub },
       include: {
         book: true,
-        user: true,
       },
+      orderBy: { borrowedAt: 'desc' },
     });
   }
 }
