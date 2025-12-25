@@ -123,7 +123,16 @@ model Fine {
   loan      Loan     @relation(fields: [loanId], references: [id])
   amount    Decimal
   paid      Boolean  @default(false)
+  paidAt    DateTime?
+  type      FineType @default(OVERDUE)
   createdAt DateTime @default(now())
+}
+
+enum FineType {
+  OVERDUE
+  LOST
+  DAMAGE
+  MANUAL
 }
 
 model FineRule {

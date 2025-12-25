@@ -17,6 +17,7 @@ import { FinesModule } from './fines/fines.module';
 import { AuditModule } from './audit/audit.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { RevenueModule } from './revenue/revenue.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -43,6 +44,7 @@ import { AppService } from './app.service';
     AuditModule,
     DashboardModule,
     UploadsModule,
+    RevenueModule,
   ],
   controllers: [AppController],
   providers: [
