@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { LoanCountdown } from "@/components/circulation/loan-countdown";
 
 export default function DashboardPage() {
     const { user } = useAuth();
@@ -111,7 +112,7 @@ export default function DashboardPage() {
                 <div className="space-y-6">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                         <h2 className="text-3xl font-bold tracking-tight">Library Catalog</h2>
-
+                        {/* ... existing catalog header ... */}
                         <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
                             {/* Filter */}
                             <div className="w-full md:w-[200px]">
@@ -141,6 +142,8 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
+                    <ActiveLoans />
+
                     {booksLoading ? (
                         <div>Loading Catalog...</div>
                     ) : (
@@ -155,6 +158,47 @@ export default function DashboardPage() {
                     )}
                 </div>
             )}
+        </div>
+    );
+}
+
+function ActiveLoans() {
+    const { data: loans } = useQuery({
+        queryKey: ['my-loans'],
+        queryFn: async () => {
+            const res = await api.get('/circulation/loans');
+            return res.data;
+        }
+    });
+
+    const activeLoans = Array.isArray(loans) ? loans.filter((l: any) => l.status === 'ACTIVE') : [];
+
+    if (!activeLoans.length) return null;
+
+    return (
+        <div className="space-y-4">
+            <h3 className="text-xl font-semibold">Active Loans</h3>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {activeLoans.map((loan: any) => (
+                    <Card key={loan.id} className="border-l-4 border-l-blue-500">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base">{loan.book.title}</CardTitle>
+                            <p className="text-sm text-muted-foreground">{loan.book.author}</p>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-col space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-muted-foreground">Due Date:</span>
+                                    <span>{new Date(loan.dueDate).toLocaleDateString()}</span>
+                                </div>
+                                <div className="mt-2 pt-2 border-t">
+                                    <LoanCountdown dueDate={loan.dueDate} />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
         </div>
     );
 }

@@ -308,9 +308,17 @@ export class RequestsService {
         : null;
 
       // Create Loan
-      // Calculate due date (e.g., 14 days from now)
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 14);
+      // Calculate due date based on requested duration
+      let dueDate = new Date();
+      if (request.returnDate) {
+        // Calculate duration requested in milliseconds
+        const requestedDuration = new Date(request.returnDate).getTime() - new Date(request.createdAt).getTime();
+        // New due date is NOW + requested duration
+        dueDate = new Date(Date.now() + requestedDuration);
+      } else {
+        // Default 14 days
+        dueDate.setDate(dueDate.getDate() + 14);
+      }
 
       await tx.loan.create({
         data: {
@@ -382,8 +390,14 @@ export class RequestsService {
         : null;
 
       // Create Loan (Timer starts NOW)
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 14);
+      let dueDate = new Date();
+      if (request.returnDate) {
+        // Calculate duration requested
+        const requestedDuration = new Date(request.returnDate).getTime() - new Date(request.createdAt).getTime();
+        dueDate = new Date(Date.now() + requestedDuration);
+      } else {
+        dueDate.setDate(dueDate.getDate() + 14);
+      }
 
       await tx.loan.create({
         data: {
