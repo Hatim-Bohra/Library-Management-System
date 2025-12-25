@@ -4,23 +4,43 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { jwtDecode } from 'jwt-decode';
+import { getCookie } from 'cookies-next';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 export default function RevenuePage() {
     const [period, setPeriod] = useState<'daily' | 'monthly' | 'yearly'>('monthly');
+    const [role, setRole] = useState<string | null>(null);
+
+    useEffect(() => {
+        const token = getCookie('token'); // Assuming cookie name is 'token' or 'accessToken'
+        if (token) {
+            try {
+                const decoded: any = jwtDecode(token as string);
+                setRole(decoded.role);
+                if (decoded.role === 'LIBRARIAN') {
+                    setPeriod('daily');
+                }
+            } catch (e) {
+                console.error("Failed to decode token", e);
+            }
+        }
+    }, []);
 
     const { data, isLoading } = useQuery({
         queryKey: ['revenue', period],
         queryFn: async () => {
             const res = await api.get('/revenue/analytics', { params: { period } });
             return res.data;
-        }
+        },
+        // Prevent refetching with wrong period for Librarians before effect runs
+        enabled: !!role
     });
 
-    if (isLoading) return <div className="p-8">Loading analytics...</div>;
+    if (isLoading || !role) return <div className="p-8">Loading analytics...</div>;
 
     const breakdownData = data?.breakdown ? Object.entries(data.breakdown).map(([name, value]) => ({ name, value })) : [];
 
@@ -28,18 +48,26 @@ export default function RevenuePage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold tracking-tight">Revenue Analytics</h2>
-                <div className="w-[180px]">
-                    <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select period" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="daily">Daily View</SelectItem>
-                            <SelectItem value="monthly">Monthly View</SelectItem>
-                            <SelectItem value="yearly">Yearly View</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+                {role === 'LIBRARIAN' ? (
+                    <div className="flex items-center space-x-2">
+                        <span className="text-sm text-muted-foreground bg-secondary px-3 py-1 rounded-md">
+                            Daily View (Librarian Access)
+                        </span>
+                    </div>
+                ) : (
+                    <div className="w-[180px]">
+                        <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select period" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="daily">Daily View</SelectItem>
+                                <SelectItem value="monthly">Monthly View</SelectItem>
+                                <SelectItem value="yearly">Yearly View</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
