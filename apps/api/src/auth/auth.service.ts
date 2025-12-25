@@ -34,7 +34,7 @@ export class AuthService {
       newUser.email,
       newUser.role,
     );
-    await this.updateRtHash(newUser.id, tokens.refresh_token);
+    await this.createSession(newUser.id, tokens.refresh_token);
     return tokens;
   }
 
@@ -55,23 +55,11 @@ export class AuthService {
     }
 
     const tokens = await this.getTokens(user.id, user.email, user.role);
-    await this.updateRtHash(user.id, tokens.refresh_token);
+    await this.createSession(user.id, tokens.refresh_token);
     return tokens;
   }
 
-  async logout(userId: string) {
-    await this.prisma.user.updateMany({
-      where: {
-        id: userId,
-        hashedRefreshToken: {
-          not: null,
-        },
-      },
-      data: {
-        hashedRefreshToken: null,
-      },
-    });
-  }
+
 
   async refreshTokens(userId: string, rt: string): Promise<Tokens> {
     const user = await this.prisma.user.findUnique({
@@ -79,28 +67,43 @@ export class AuthService {
         id: userId,
       },
     });
-    if (!user || !user.hashedRefreshToken)
-      throw new ForbiddenException('Access Denied');
+    if (!user) throw new ForbiddenException('Access Denied');
 
-    const rtMatches = await bcrypt.compare(rt, user.hashedRefreshToken);
-    if (!rtMatches) throw new ForbiddenException('Access Denied');
+    // Find session matching this token? 
+    // Since we hash the token in DB, we can't find by token directly unless we iterate or if we stored a token ID in the token payload.
+    // For now, iterate or simplify? Iterating is bad.
+    // Better strategy: The client sends RT. We verify it.
+    // But we need to check if it's REVOKED (i.e. not in Session table).
+    // So we must be able to match the RT to a Session.
+    // Issue: We store Hashed RT. We cannot lookup by RT.
+    // Fix: We need to find ALL sessions for user, and compare.
+
+    const sessions = await this.prisma.session.findMany({ where: { userId } });
+    let matchedSession = null;
+
+    for (const session of sessions) {
+      const isMatch = await bcrypt.compare(rt, session.hashedRefreshToken);
+      if (isMatch) {
+        matchedSession = session;
+        break;
+      }
+    }
+
+    if (!matchedSession) throw new ForbiddenException('Access Denied (Invalid Session)');
 
     const tokens = await this.getTokens(user.id, user.email, user.role);
-    await this.updateRtHash(user.id, tokens.refresh_token);
+
+    // Rotate tokens: Update the session with new RT
+    const hash = await this.hashData(tokens.refresh_token);
+    await this.prisma.session.update({
+      where: { id: matchedSession.id },
+      data: { hashedRefreshToken: hash, updatedAt: new Date() }
+    });
+
     return tokens;
   }
 
-  async updateRtHash(userId: string, rt: string) {
-    const hash = await this.hashData(rt);
-    await this.prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        hashedRefreshToken: hash,
-      },
-    });
-  }
+
 
   hashData(data: string) {
     return bcrypt.hash(data, 10);
@@ -120,7 +123,7 @@ export class AuthService {
         },
         {
           secret: this.config.get<string>('JWT_ACCESS_SECRET'),
-          expiresIn: '1d',
+          expiresIn: '15m', // Short lived access token
         },
       ),
       this.jwtService.signAsync(
@@ -140,5 +143,48 @@ export class AuthService {
       access_token: at,
       refresh_token: rt,
     };
+  }
+
+  async createSession(userId: string, rt: string, deviceInfo?: string, ip?: string) {
+    // Check policies
+    const policy = await this.prisma.systemPolicy.findFirst();
+    const maxSessions = policy?.maxConcurrentSessions || 3;
+
+    const currentSessions = await this.prisma.session.count({ where: { userId } });
+
+    if (currentSessions >= maxSessions) {
+      // Revoke oldest
+      const oldest = await this.prisma.session.findFirst({
+        where: { userId },
+        orderBy: { createdAt: 'asc' }
+      });
+      if (oldest) {
+        await this.prisma.session.delete({ where: { id: oldest.id } });
+      }
+    }
+
+    const hash = await this.hashData(rt);
+    await this.prisma.session.create({
+      data: {
+        userId,
+        hashedRefreshToken: hash,
+        deviceInfo: deviceInfo || 'Unknown',
+        clientIp: ip || 'Unknown',
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+      }
+    });
+  }
+
+  async logout(userId: string) {
+    // In a real stateless JWT scenario without a specific session ID passed to logout, 
+    // we might just revoke all or rely on client forgetting token. 
+    // Ideally logout should take a refresh token or session ID to revoke just that one.
+    // But for now, safe default is revoke all or we need to change controller to pass RT.
+    // Let's assume we revoke all for safety or update this signature later.
+    // Or better: The controller calls this. Let's revoke all for this user for now to be safe, 
+    // or we can't identify *which* session without the RT.
+    await this.prisma.session.deleteMany({
+      where: { userId }
+    });
   }
 }
