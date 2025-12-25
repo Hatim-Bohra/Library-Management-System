@@ -17,7 +17,7 @@ async function bootstrap() {
   app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
   }));
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
   });
 

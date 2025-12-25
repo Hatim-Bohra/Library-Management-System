@@ -53,8 +53,8 @@ export default function Home() {
       <PublicNav />
 
       {/* Hero Section */}
-      <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gray-100 dark:bg-gray-900 border-b">
-        <div className="container px-4 md:px-6 text-center">
+      <section className="w-full flex-1 flex items-center justify-center py-12 md:py-24 lg:py-32 xl:py-48 bg-gray-100 dark:bg-gray-900 border-b">
+        <div className="container mx-auto px-4 md:px-6 text-center">
           <div className="max-w-3xl mx-auto space-y-4">
             <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
               Discover Your Next Great Read
@@ -78,7 +78,7 @@ export default function Home() {
 
       {/* Catalog Section */}
       <section id="catalog" className="w-full py-12 md:py-24 lg:py-32">
-        <div className="container px-4 md:px-6">
+        <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Catalog</h2>
 
@@ -103,7 +103,9 @@ export default function Home() {
               {[1, 2, 3, 4].map(i => <div key={i} className="h-[400px] bg-muted animate-pulse rounded-lg" />)}
             </div>
           ) : (
-            <BookGrid books={books} />
+            <div className="w-full">
+              <BookGrid books={books} />
+            </div>
           )}
 
         </div>
@@ -111,7 +113,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="w-full py-6 bg-gray-100 dark:bg-gray-900 border-t">
-        <div className="container px-4 md:px-6 text-center text-sm text-gray-500">
+        <div className="container mx-auto px-4 md:px-6 text-center text-sm text-gray-500">
           © 2024 Acmei Library System. All rights reserved.
         </div>
       </footer>

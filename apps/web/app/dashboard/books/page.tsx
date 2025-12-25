@@ -4,33 +4,74 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { BookCard } from '@/components/books/book-card';
 import { Input } from '@/components/ui/input';
-import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function BooksPage() {
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('all');
 
-    // TODO: Ideally we separate Admin vs Member views. 
-    // For this task we are focusing on "User-facing UI", so we'll default to the catalog view.
-    // Real app might need separate routes or role checks here.
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [search]);
+
+    // Fetch Categories
+    const { data: categories } = useQuery({
+        queryKey: ['categories'],
+        queryFn: async () => {
+            const { data } = await api.get('/categories');
+            return data;
+        },
+    });
 
     const { data: books, isLoading, error } = useQuery({
-        queryKey: ['books', search],
+        queryKey: ['books', debouncedSearch, selectedCategory],
         queryFn: async () => {
-            const { data } = await api.get('/books', { params: { q: search } });
+            const params: any = {};
+            if (debouncedSearch) params.q = debouncedSearch;
+            if (selectedCategory && selectedCategory !== 'all') params.categoryId = selectedCategory;
+
+            const { data } = await api.get('/books', { params });
             return data;
         }
     });
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <h2 className="text-3xl font-bold tracking-tight">Library Catalog</h2>
-                <div className="w-1/3">
-                    <Input
-                        placeholder="Search books..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
+
+                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                    {/* Filter */}
+                    <div className="w-full md:w-[200px]">
+                        <Select onValueChange={setSelectedCategory} defaultValue="all">
+                            <SelectTrigger>
+                                <SelectValue placeholder="All Genres" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Genres</SelectItem>
+                                {categories?.map((cat: any) => (
+                                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Search */}
+                    <div className="flex w-full md:w-[300px] items-center space-x-2">
+                        <Input
+                            placeholder="Search books..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                        <Button size="icon"><Search className="h-4 w-4" /></Button>
+                    </div>
                 </div>
             </div>
 
@@ -45,7 +86,7 @@ export default function BooksPage() {
                             <BookCard key={book.id} book={book} />
                         ))}
                     </div>
-                    {books?.length === 0 && <p className="text-muted-foreground">No books found.</p>}
+                    {books?.length === 0 && <p className="text-muted-foreground">No books found matching your criteria.</p>}
                 </>
             )}
         </div>

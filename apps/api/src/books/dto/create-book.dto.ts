@@ -36,4 +36,9 @@ export class CreateBookDto {
   @IsString()
   @IsNotEmpty()
   categoryId!: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  coverUrl?: string;
 }

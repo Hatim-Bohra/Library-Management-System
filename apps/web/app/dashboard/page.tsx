@@ -15,16 +15,61 @@ const iconMap: any = {
     AlertCircle
 };
 
+import { useAuth } from "@/components/providers/auth-provider";
+import { BookCard } from "@/components/books/book-card";
+
+import { useState, useEffect } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 export default function DashboardPage() {
-    const { data: stats, isLoading } = useQuery({
+    const { user } = useAuth();
+    const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('all');
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [search]);
+
+    const { data: stats, isLoading: statsLoading } = useQuery({
         queryKey: ['dashboard-stats'],
         queryFn: async () => {
+            // Fetch stats for everyone (Member will get their specific 4 stats)
             const { data } = await api.get('/dashboard/stats');
             return data;
-        }
+        },
     });
 
-    if (isLoading) {
+    // Fetch Categories
+    const { data: categories } = useQuery({
+        queryKey: ['categories'],
+        queryFn: async () => {
+            const { data } = await api.get('/categories');
+            return data;
+        },
+        enabled: !!user && user.role === 'MEMBER'
+    });
+
+    const { data: books, isLoading: booksLoading } = useQuery({
+        queryKey: ['dashboard-books', debouncedSearch, selectedCategory],
+        queryFn: async () => {
+            const params: any = {};
+            if (debouncedSearch) params.q = debouncedSearch;
+            if (selectedCategory && selectedCategory !== 'all') params.categoryId = selectedCategory;
+
+            const { data } = await api.get('/books', { params });
+            return data;
+        },
+        enabled: !!user && user.role === 'MEMBER'
+    });
+
+    if (statsLoading) {
         return (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {[1, 2, 3, 4].map((i) => (
@@ -35,28 +80,81 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {Array.isArray(stats) && stats.map((stat: any, index: number) => {
-                const Icon = iconMap[stat.icon] || Book;
-                return (
-                    <Link href={stat.link} key={index}>
-                        <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">
-                                    {stat.title}
-                                </CardTitle>
-                                <Icon className={`h-4 w-4 ${stat.color}`} />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{stat.value}</div>
-                                <p className="text-xs text-muted-foreground">
-                                    Click to view details
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </Link>
-                );
-            })}
+        <div className="space-y-8">
+            {/* Stats Section */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {Array.isArray(stats) && stats.map((stat: any, index: number) => {
+                    const Icon = iconMap[stat.icon] || Book;
+                    return (
+                        <Link href={stat.link} key={index}>
+                            <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">
+                                        {stat.title}
+                                    </CardTitle>
+                                    <Icon className={`h-4 w-4 ${stat.color}`} />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{stat.value}</div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Click to view details
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </Link>
+                    );
+                })}
+            </div>
+
+            {/* Book Catalog Section (Members Only) */}
+            {user?.role === 'MEMBER' && (
+                <div className="space-y-6">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                        <h2 className="text-3xl font-bold tracking-tight">Library Catalog</h2>
+
+                        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                            {/* Filter */}
+                            <div className="w-full md:w-[200px]">
+                                <Select onValueChange={setSelectedCategory} defaultValue="all">
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="All Genres" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Genres</SelectItem>
+                                        {categories?.map((cat: any) => (
+                                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* Search */}
+                            <div className="flex w-full md:w-[300px] items-center space-x-2">
+                                <Input
+                                    type="search"
+                                    placeholder="Search..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                />
+                                <Button size="icon"><Search className="h-4 w-4" /></Button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {booksLoading ? (
+                        <div>Loading Catalog...</div>
+                    ) : (
+                        <>
+                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                {books?.map((book: any) => (
+                                    <BookCard key={book.id} book={book} />
+                                ))}
+                            </div>
+                            {books?.length === 0 && <p>No books found matching your criteria.</p>}
+                        </>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
