@@ -34,3 +34,6 @@ yarn-error.log*
 
 # Turbo
 .turbo
+
+# Exceptions
+!.vscode/settings.json

@@ -21,16 +21,16 @@ export function BookCard({ book }: BookCardProps) {
     const availableCount = book.inventoryItems ? book.inventoryItems.filter((i: any) => i.status === 'AVAILABLE').length : 0;
 
     return (
-        <Card className="flex flex-col h-full overflow-hidden">
-            <div className="aspect-[2/3] w-full bg-muted relative">
+        <Card className="flex flex-col h-full overflow-hidden group">
+            <div className="aspect-[2/3] w-full bg-muted relative overflow-hidden">
                 {book.coverUrl ? (
                     <img
                         src={book.coverUrl.startsWith('http') ? book.coverUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${book.coverUrl}`}
                         alt={book.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                 ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+                    <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-muted/50">
                         <span className="text-xl font-bold opacity-20">No Cover</span>
                     </div>
                 )}

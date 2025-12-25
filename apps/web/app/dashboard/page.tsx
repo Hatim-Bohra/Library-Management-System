@@ -86,7 +86,7 @@ export default function DashboardPage() {
     return (
         <div className="space-y-8">
             {/* Stats Section */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {Array.isArray(stats) && stats.map((stat: any, index: number) => {
                     const Icon = iconMap[stat.icon] || Book;
                     return (
