@@ -103,4 +103,22 @@ export class FinesService implements OnModuleInit {
   calculateLostFee(bookPrice: number, processingFee: any): number {
     return Number(bookPrice) + Number(processingFee);
   }
+
+  async getUserFines(userId: string) {
+    return this.prisma.fine.findMany({
+      where: {
+        loan: {
+          userId,
+        },
+      },
+      include: {
+        loan: {
+          include: {
+            book: true,
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }

@@ -19,6 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { Audit } from '../common/decorators/audit.decorator';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
+import { GetCurrentUser } from '../auth/decorators/get-current-user.decorator';
 
 @ApiTags('Fines')
 @UseInterceptors(AuditInterceptor)
@@ -67,5 +68,13 @@ export class FinesController {
     },
   ) {
     return this.finesService.updateRule(role, data);
+  }
+
+  @ApiOperation({ summary: 'Get my fines' })
+  @ApiResponse({ status: 200, description: 'List of user fines.' })
+  @ApiBearerAuth()
+  @Get()
+  getMyFines(@GetCurrentUser() user: any) {
+    return this.finesService.getUserFines(user.sub);
   }
 }

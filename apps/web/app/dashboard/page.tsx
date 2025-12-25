@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LoanCountdown } from "@/components/circulation/loan-countdown";
+import { FineBreakdown } from "@/components/fines/fine-breakdown";
 
 export default function DashboardPage() {
     const { user } = useAuth();
@@ -142,6 +143,7 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
+                    <FineBreakdown />
                     <ActiveLoans />
 
                     {booksLoading ? (

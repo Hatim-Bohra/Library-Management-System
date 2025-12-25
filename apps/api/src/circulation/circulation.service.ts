@@ -50,31 +50,32 @@ export class CirculationService {
       });
 
       // 2. Calculate Fine
-      // Need rules. Assuming FinesService can be injected or we fetch rules here.
-      // Ideally injecting FinesService, but for simplicity/dependency loop avoidance fetching rule here.
-      const rule = await tx.fineRule.findUnique({ where: { role: loan.user.role } });
+      // Use snapshot rules from the loan
+      const endDate = new Date();
+      const diffTime = endDate.getTime() - new Date(loan.dueDate).getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      if (rule) {
-        const endDate = new Date();
-        const diffTime = endDate.getTime() - new Date(loan.dueDate).getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      // Use Snapshot values from Loan, default to 0 if missing (though they shouldn't be)
+      const gracePeriod = loan['ruleGracePeriod'] ?? 0;
+      const dailyRate = Number(loan['ruleDailyRate'] ?? 0);
+      const maxFine = loan['ruleMaxFine'] ? Number(loan['ruleMaxFine']) : null;
 
-        if (diffDays > rule.gracePeriod) {
-          const chargeableDays = diffDays - rule.gracePeriod;
-          let amount = chargeableDays * Number(rule.dailyRate);
-          if (rule.maxFine && amount > Number(rule.maxFine)) {
-            amount = Number(rule.maxFine);
-          }
+      if (diffDays > gracePeriod) {
+        const chargeableDays = diffDays - gracePeriod;
+        let amount = chargeableDays * dailyRate;
 
-          if (amount > 0) {
-            await tx.fine.create({
-              data: {
-                loanId: loan.id,
-                amount,
-                type: FineType.OVERDUE,
-              }
-            });
-          }
+        if (maxFine && amount > maxFine) {
+          amount = maxFine;
+        }
+
+        if (amount > 0) {
+          await tx.fine.create({
+            data: {
+              loanId: loan.id,
+              amount,
+              type: FineType.OVERDUE,
+            }
+          });
         }
       }
 
