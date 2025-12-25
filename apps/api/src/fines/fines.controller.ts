@@ -24,11 +24,11 @@ import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 @UseInterceptors(AuditInterceptor)
 @Controller('fines')
 export class FinesController {
-  constructor(private readonly finesService: FinesService) {}
+  constructor(private readonly finesService: FinesService) { }
 
   @ApiOperation({ summary: 'Get all fine rules' })
   @ApiResponse({ status: 200, description: 'List of fine rules.' })
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.LIBRARIAN)
   @ApiBearerAuth()
   @Get('rules')
   getRules() {
@@ -53,7 +53,7 @@ export class FinesController {
     },
   })
   @Audit('UPDATE_FINE_RULE', 'FineRule')
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.LIBRARIAN)
   @ApiBearerAuth()
   @Put('rules/:role')
   updateRule(

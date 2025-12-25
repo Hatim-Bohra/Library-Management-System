@@ -1,10 +1,37 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { Role } from '@repo/database';
 
 @Injectable()
-export class FinesService {
+export class FinesService implements OnModuleInit {
+  private readonly logger = new Logger(FinesService.name);
+
   constructor(private prisma: PrismaService) { }
+
+  async onModuleInit() {
+    await this.seedDefaultRules();
+  }
+
+  private async seedDefaultRules() {
+    const defaultRule = {
+      role: Role.MEMBER,
+      gracePeriod: 1,
+      dailyRate: 2.0,
+      maxFine: 100.0,
+      lostBookProcessingFee: 30.0,
+    };
+
+    const existing = await this.prisma.fineRule.findUnique({
+      where: { role: Role.MEMBER },
+    });
+
+    if (!existing) {
+      this.logger.log('Seeding default fine rules for MEMBER...');
+      await this.prisma.fineRule.create({
+        data: defaultRule,
+      });
+    }
+  }
 
   async getApplicableRule(role: Role) {
     const rule = await this.prisma.fineRule.findUnique({
