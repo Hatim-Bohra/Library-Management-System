@@ -61,6 +61,10 @@ export class UploadsController {
         }
         // Return relative path or full URL. Frontend needs to prefix it or backend serves it.
         // Let's assume we serve /uploads static route.
-        return { url: `/uploads/covers/${file.filename}` };
+        return {
+            url: `/uploads/covers/${file.filename}`,
+            size: file.size,
+            mimetype: file.mimetype
+        };
     }
 }

@@ -50,6 +50,8 @@ const formSchema = z.object({
     copies: z.coerce.number().min(0, 'Must have at least 0 copies'),
     description: z.string().optional(),
     coverUrl: z.string().optional(),
+    coverImageSize: z.number().optional(),
+    coverImageMime: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -150,6 +152,8 @@ export function BookDialog({ initialData }: BookDialogProps) {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
             form.setValue('coverUrl', data.url);
+            form.setValue('coverImageSize', data.size);
+            form.setValue('coverImageMime', data.mimetype);
             toast.success('Cover uploaded');
         } catch (error) {
             console.error('Upload failed', error);

@@ -45,6 +45,8 @@ model Book {
   description   String?
   price         Decimal @default(0.0)
   coverUrl      String?
+  coverImageSize Int?
+  coverImageMime String?
 
   authorId String
   author   Author @relation(fields: [authorId], references: [id])

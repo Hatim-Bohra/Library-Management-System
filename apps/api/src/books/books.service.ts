@@ -49,6 +49,8 @@ export class BooksService {
         publishedYear: bookData.publishedYear,
         description: bookData.description,
         coverUrl: bookData.coverUrl,
+        coverImageSize: bookData.coverImageSize,
+        coverImageMime: bookData.coverImageMime,
         categoryId: dto.categoryId,
         authorId: author.id,
         copies: 0, // Will be updated by inventory

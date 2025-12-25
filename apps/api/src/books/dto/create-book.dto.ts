@@ -41,4 +41,14 @@ export class CreateBookDto {
   @IsString()
   @IsOptional()
   coverUrl?: string;
+
+  @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  coverImageSize?: number;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  coverImageMime?: string;
 }
