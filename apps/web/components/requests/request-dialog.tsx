@@ -32,11 +32,13 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import api from '@/lib/api';
 
 const formSchema = z.object({
     type: z.enum(['PICKUP', 'DELIVERY']),
     address: z.string().optional(),
+    returnDate: z.string().optional(),
 }).refine((data) => {
     if (data.type === 'DELIVERY' && (!data.address || data.address.trim() === '')) {
         return false;
@@ -61,6 +63,7 @@ export function RequestDialog({ bookId, bookTitle, trigger }: RequestDialogProps
         defaultValues: {
             type: 'PICKUP',
             address: '',
+            returnDate: '',
         },
     });
 
@@ -70,6 +73,7 @@ export function RequestDialog({ bookId, bookTitle, trigger }: RequestDialogProps
                 bookId,
                 type: values.type,
                 address: values.type === 'DELIVERY' ? values.address : undefined,
+                returnDate: values.returnDate || undefined,
             });
             return data;
         },
@@ -90,6 +94,15 @@ export function RequestDialog({ bookId, bookTitle, trigger }: RequestDialogProps
     }
 
     const type = form.watch('type');
+
+    // Date limits
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 14);
+
+    const minStr = tomorrow.toISOString().split('T')[0];
+    const maxStr = maxDate.toISOString().split('T')[0];
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -142,6 +155,28 @@ export function RequestDialog({ bookId, bookTitle, trigger }: RequestDialogProps
                                 )}
                             />
                         )}
+
+                        <FormField
+                            control={form.control}
+                            name="returnDate"
+                            render={({ field }) => (
+                                <FormItem className="space-y-2">
+                                    <FormLabel>Expected Return Date (Optional)</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="date"
+                                            min={minStr}
+                                            max={maxStr}
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <p className="text-xs text-muted-foreground">
+                                        Max duration: 14 days from today
+                                    </p>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
                         <DialogFooter>
                             <Button type="submit" disabled={mutation.isPending}>

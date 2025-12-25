@@ -64,6 +64,27 @@ export class RequestsService {
       throw new NotFoundException('Book not found');
     }
 
+    // Validate Return Date if present
+    if (createRequestDto.returnDate) {
+      const returnDate = new Date(createRequestDto.returnDate);
+      const today = new Date();
+      const maxDate = new Date();
+      maxDate.setDate(today.getDate() + 14);
+
+      const tomorrow = new Date();
+      tomorrow.setDate(today.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+
+      if (returnDate < tomorrow) {
+        throw new BadRequestException('Return date must be in the future');
+      }
+
+      // Reset time for comparison or use strict comparison
+      if (returnDate > maxDate) {
+        throw new BadRequestException('Cannot request for more than 14 days');
+      }
+    }
+
     // Check if user already has a pending request for this book
     const existingRequest = await this.prisma.bookRequest.findFirst({
       where: {
@@ -86,6 +107,7 @@ export class RequestsService {
         type,
         address,
         status: BookRequestStatus.PENDING,
+        returnDate: createRequestDto.returnDate ? new Date(createRequestDto.returnDate) : undefined,
       },
     });
   }
