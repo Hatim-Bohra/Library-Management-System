@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Book, Users, Repeat, AlertCircle } from 'lucide-react';
+import { Book, Users, Repeat, AlertCircle, CheckCircle, DollarSign } from 'lucide-react';
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import Link from "next/link";
@@ -12,7 +12,9 @@ const iconMap: any = {
     Book,
     Users,
     Repeat,
-    AlertCircle
+    AlertCircle,
+    CheckCircle,
+    DollarSign
 };
 
 import { useAuth } from "@/components/providers/auth-provider";
