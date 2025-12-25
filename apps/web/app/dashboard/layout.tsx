@@ -8,7 +8,7 @@ import { Book, Users, Repeat, LayoutDashboard, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@/components/providers/auth-provider';
-import { NotificationBell } from '@/components/notification-bell';
+import { NotificationBell } from '@/components/notifications/notification-bell';
 
 export default function DashboardLayout({
     children,

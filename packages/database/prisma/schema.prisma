@@ -9,20 +9,22 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  role      Role     @default(MEMBER)
-  firstName String
-  lastName  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password      String
+  role          Role           @default(MEMBER)
+  firstName     String
+  lastName      String
+  fines         Fine[]
+  notifications Notification[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
   hashedRefreshToken String?
 
-  loans        Loan[]
-  reservations Reservation[]
-  auditLogs    AuditLog[]
+  loans                 Loan[]
+  reservations          Reservation[]
+  auditLogs             AuditLog[]
   inventoryTransactions InventoryTransaction[]
   bookRequests          BookRequest[]
 }
@@ -34,60 +36,61 @@ enum Role {
 }
 
 model Book {
-  id          String   @id @default(uuid())
-  title       String
-  isbn        String   @unique
+  id            String  @id @default(uuid())
+  title         String
+  isbn          String  @unique
   publishedYear Int
-  copies      Int      @default(1)
-  isAvailable Boolean  @default(true)
-  description String?
-  price       Decimal  @default(0.0)
-  coverUrl    String?
-  
-  authorId    String
-  author      Author   @relation(fields: [authorId], references: [id])
-  
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
+  copies        Int     @default(1)
+  isAvailable   Boolean @default(true)
+  description   String?
+  price         Decimal @default(0.0)
+  coverUrl      String?
+
+  authorId String
+  author   Author @relation(fields: [authorId], references: [id])
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
 
   inventoryItems InventoryItem[]
-  loans        Loan[]
-  reservations Reservation[]
-  
+  loans          Loan[]
+  reservations   Reservation[]
+
   bookRequests BookRequest[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Author {
-  id    String @id @default(uuid())
+  id    String  @id @default(uuid())
   name  String
   bio   String?
   books Book[]
 }
 
 model Category {
-  id          String @id @default(uuid())
-  name        String @unique
+  id          String  @id @default(uuid())
+  name        String  @unique
   description String?
   books       Book[]
 }
 
 model Loan {
-  id         String    @id @default(uuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id])
-  bookId     String
-  book       Book      @relation(fields: [bookId], references: [id])
-  
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  bookId String
+  book   Book   @relation(fields: [bookId], references: [id])
+
   borrowedAt DateTime  @default(now())
   dueDate    DateTime
   returnedAt DateTime?
-  
-  status     LoanStatus @default(ACTIVE)
-  fines      Fine[]
-  
+
+  status            LoanStatus         @default(ACTIVE)
+  fines             Fine[]
+  sentNotifications LoanNotification[]
+
   // Rule Snapshot
   ruleGracePeriod Int?
   ruleDailyRate   Decimal?
@@ -102,13 +105,13 @@ enum LoanStatus {
 }
 
 model Reservation {
-  id        String   @id @default(uuid())
+  id        String            @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User              @relation(fields: [userId], references: [id])
   bookId    String
-  book      Book     @relation(fields: [bookId], references: [id])
+  book      Book              @relation(fields: [bookId], references: [id])
   status    ReservationStatus @default(PENDING)
-  createdAt DateTime @default(now())
+  createdAt DateTime          @default(now())
 }
 
 enum ReservationStatus {
@@ -118,14 +121,16 @@ enum ReservationStatus {
 }
 
 model Fine {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   loanId    String
-  loan      Loan     @relation(fields: [loanId], references: [id])
+  loan      Loan      @relation(fields: [loanId], references: [id])
   amount    Decimal
-  paid      Boolean  @default(false)
+  paid      Boolean   @default(false)
   paidAt    DateTime?
-  type      FineType @default(OVERDUE)
-  createdAt DateTime @default(now())
+  type      FineType  @default(OVERDUE)
+  createdAt DateTime  @default(now())
+  User      User?     @relation(fields: [userId], references: [id])
+  userId    String?
 }
 
 enum FineType {
@@ -136,12 +141,12 @@ enum FineType {
 }
 
 model FineRule {
-  id        String   @id @default(uuid())
-  role      Role     @unique
-  gracePeriod Int    @default(0)
-  dailyRate   Decimal @default(0.0)
-  maxFine     Decimal?
-  lostBookProcessingFee Decimal @default(0.0)
+  id                    String   @id @default(uuid())
+  role                  Role     @unique
+  gracePeriod           Int      @default(0)
+  dailyRate             Decimal  @default(0.0)
+  maxFine               Decimal?
+  lostBookProcessingFee Decimal  @default(0.0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -167,7 +172,7 @@ model InventoryItem {
   location  String?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  
+
   transactions InventoryTransaction[]
   bookRequest  BookRequest?
 
@@ -200,22 +205,22 @@ enum InventoryAction {
 }
 
 model BookRequest {
-  id              String            @id @default(uuid())
+  id              String         @id @default(uuid())
   userId          String
-  user            User              @relation(fields: [userId], references: [id])
+  user            User           @relation(fields: [userId], references: [id])
   bookId          String
-  book            Book              @relation(fields: [bookId], references: [id])
-  inventoryItemId String?           @unique
-  inventoryItem   InventoryItem?    @relation(fields: [inventoryItemId], references: [id])
-  
+  book            Book           @relation(fields: [bookId], references: [id])
+  inventoryItemId String?        @unique
+  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+
   status          BookRequestStatus @default(PENDING)
   type            BookRequestType
-  address         String?           // Only for DELIVERY
+  address         String? // Only for DELIVERY
   rejectionReason String?
-  returnDate      DateTime?         // Desired return date
-  
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  returnDate      DateTime? // Desired return date
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([status])
@@ -235,4 +240,37 @@ enum BookRequestType {
   PICKUP
   DELIVERY
   RETURN
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  message   String
+  type      NotificationType
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  SUCCESS
+  ERROR
+}
+
+model LoanNotification {
+  id          String                  @id @default(uuid())
+  loanId      String
+  loan        Loan                    @relation(fields: [loanId], references: [id])
+  triggerType NotificationTriggerType
+  sentAt      DateTime                @default(now())
+
+  @@unique([loanId, triggerType])
+}
+
+enum NotificationTriggerType {
+  BEFORE_DUE
+  ON_DUE
+  OVERDUE
 }
