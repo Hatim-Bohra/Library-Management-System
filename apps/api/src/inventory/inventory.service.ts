@@ -160,4 +160,114 @@ export class InventoryService {
       return targetItem;
     });
   }
+
+  async getInventoryStats(page: number = 1, limit: number = 10, search?: string) {
+    const skip = (page - 1) * limit;
+
+    // 1. Get Books (Paginated)
+    const where: Prisma.BookWhereInput = search
+      ? {
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { isbn: { contains: search, mode: 'insensitive' } },
+        ],
+      }
+      : {};
+
+    const [books, total] = await Promise.all([
+      this.prisma.book.findMany({
+        where,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          title: true,
+          isbn: true,
+          author: { select: { name: true } },
+          coverUrl: true
+        }
+      }),
+      this.prisma.book.count({ where })
+    ]);
+
+    // 2. Get Inventory Counts for these books
+    const bookIds = books.map(b => b.id);
+    const inventoryGroups = await this.prisma.inventoryItem.groupBy({
+      by: ['bookId', 'status'],
+      where: { bookId: { in: bookIds } },
+      _count: { _all: true }
+    });
+
+    // 3. Merge Data
+    const stats = books.map(book => {
+      const bookGroups = inventoryGroups.filter(g => g.bookId === book.id);
+
+      const counts = {
+        total: 0,
+        available: 0,
+        issued: 0,
+        reserved: 0,
+        lost: 0,
+        damaged: 0
+      };
+
+      bookGroups.forEach(g => {
+        const count = g._count._all;
+        counts.total += count;
+        switch (g.status) {
+          case ItemStatus.AVAILABLE: counts.available += count; break;
+          case ItemStatus.ISSUED: counts.issued += count; break;
+          case ItemStatus.RESERVED: counts.reserved += count; break;
+          case ItemStatus.LOST: counts.lost += count; break;
+          case ItemStatus.DAMAGED: counts.damaged += count; break;
+        }
+      });
+
+      return {
+        ...book,
+        stats: counts
+      };
+    });
+
+    return {
+      data: stats,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
+  }
+
+  async getBookInventoryStats(bookId: string) {
+    const groups = await this.prisma.inventoryItem.groupBy({
+      by: ['status'],
+      where: { bookId },
+      _count: { _all: true }
+    });
+
+    const counts = {
+      total: 0,
+      available: 0,
+      issued: 0,
+      reserved: 0,
+      lost: 0,
+      damaged: 0
+    };
+
+    groups.forEach(g => {
+      const count = g._count._all;
+      counts.total += count;
+      switch (g.status) {
+        case ItemStatus.AVAILABLE: counts.available += count; break;
+        case ItemStatus.ISSUED: counts.issued += count; break;
+        case ItemStatus.RESERVED: counts.reserved += count; break;
+        case ItemStatus.LOST: counts.lost += count; break;
+        case ItemStatus.DAMAGED: counts.damaged += count; break;
+      }
+    });
+
+    return counts;
+  }
 }

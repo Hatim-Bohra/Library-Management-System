@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { AddInventoryDto, UpdateInventoryStatusDto } from './dto';
@@ -17,7 +18,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 @ApiBearerAuth()
 @Controller()
 export class InventoryController {
-  constructor(private readonly inventoryService: InventoryService) {}
+  constructor(private readonly inventoryService: InventoryService) { }
 
   @Roles(Role.ADMIN, Role.LIBRARIAN)
   @Post('books/:bookId/inventory')
@@ -46,5 +47,27 @@ export class InventoryController {
     @GetCurrentUserId() userId: string,
   ) {
     return this.inventoryService.updateStatus(id, dto, userId);
+  }
+
+  @Roles(Role.ADMIN, Role.LIBRARIAN)
+  @Get('inventory/stats')
+  @ApiOperation({ summary: 'Get aggregated inventory stats for all books' })
+  getInventoryStats(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+  ) {
+    return this.inventoryService.getInventoryStats(
+      page ? Number(page) : 1,
+      limit ? Number(limit) : 10,
+      search,
+    );
+  }
+
+  @Roles(Role.ADMIN, Role.LIBRARIAN, Role.MEMBER)
+  @Get('books/:bookId/inventory/stats')
+  @ApiOperation({ summary: 'Get inventory stats for a specific book' })
+  getBookInventoryStats(@Param('bookId', ParseUUIDPipe) bookId: string) {
+    return this.inventoryService.getBookInventoryStats(bookId);
   }
 }
