@@ -19,6 +19,7 @@ const iconMap: any = {
 
 import { useAuth } from "@/components/providers/auth-provider";
 import { BookCard } from "@/components/books/book-card";
+import { InventoryStatsCards } from "@/components/inventory/inventory-stats-cards";
 
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
@@ -85,7 +86,15 @@ export default function DashboardPage() {
 
     return (
         <div className="space-y-8">
-            {/* Stats Section */}
+            {/* Inventory Stats (Admin/Librarian) */}
+            {(user?.role === 'ADMIN' || user?.role === 'LIBRARIAN') && (
+                <div className="space-y-4">
+                    <h2 className="text-xl font-semibold tracking-tight">Inventory Overview</h2>
+                    <InventoryStatsCards />
+                </div>
+            )}
+
+            {/* General Stats Section */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {Array.isArray(stats) && stats.map((stat: any, index: number) => {
                     const Icon = iconMap[stat.icon] || Book;

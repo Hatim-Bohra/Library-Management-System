@@ -50,6 +50,13 @@ export class InventoryController {
   }
 
   @Roles(Role.ADMIN, Role.LIBRARIAN)
+  @Get('inventory/global-stats')
+  @ApiOperation({ summary: 'Get global inventory statistics' })
+  getGlobalStats() {
+    return this.inventoryService.getGlobalStats();
+  }
+
+  @Roles(Role.ADMIN, Role.LIBRARIAN)
   @Get('inventory/stats')
   @ApiOperation({ summary: 'Get aggregated inventory stats for all books' })
   getInventoryStats(

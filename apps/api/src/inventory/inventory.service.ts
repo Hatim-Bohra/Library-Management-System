@@ -270,4 +270,33 @@ export class InventoryService {
 
     return counts;
   }
+  async getGlobalStats() {
+    const groups = await this.prisma.inventoryItem.groupBy({
+      by: ['status'],
+      _count: { _all: true }
+    });
+
+    const counts = {
+      total: 0,
+      available: 0,
+      issued: 0,
+      reserved: 0,
+      lost: 0,
+      damaged: 0
+    };
+
+    groups.forEach(g => {
+      const count = g._count._all;
+      counts.total += count;
+      switch (g.status) {
+        case ItemStatus.AVAILABLE: counts.available += count; break;
+        case ItemStatus.ISSUED: counts.issued += count; break;
+        case ItemStatus.RESERVED: counts.reserved += count; break;
+        case ItemStatus.LOST: counts.lost += count; break;
+        case ItemStatus.DAMAGED: counts.damaged += count; break;
+      }
+    });
+
+    return counts;
+  }
 }
