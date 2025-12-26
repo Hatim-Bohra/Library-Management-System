@@ -48,7 +48,7 @@ export class WalletService {
         });
     }
 
-    async getTransactions(userId: string) {
+    getTransactions(userId: string) {
         return this.prisma.transaction.findMany({
             where: { userId },
             orderBy: { createdAt: 'desc' }

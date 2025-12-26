@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateBookDto, UpdateBookDto } from './dto';
 import { Book } from '@prisma/client';
@@ -6,12 +6,93 @@ import { GetBooksQueryDto } from './dto/get-books-query.dto';
 
 import { InventoryService } from '../inventory/inventory.service';
 
+import { parse } from 'csv-parse/sync';
+
 @Injectable()
 export class BooksService {
   constructor(
     private prisma: PrismaService,
     private inventoryService: InventoryService,
   ) { }
+
+  async importBooks(file: Express.Multer.File, userId: string) {
+    if (!file) throw new BadRequestException('No file uploaded');
+
+    const csvData = file.buffer.toString('utf-8');
+    const records = parse(csvData, {
+      columns: true,
+      skip_empty_lines: true,
+      trim: true,
+    }) as any[]; // Cast to any[] or specific interface to avoid unknown error
+
+    const results = {
+      success: 0,
+      errors: [] as string[],
+    };
+
+    // Parallel processing could be faster, but sequential is safer for duplicates/relations creation race conditions
+    for (const [index, row] of records.entries()) {
+      const line = index + 2; // +1 for header, +1 for 0-index
+      try {
+        const { Title, Author, ISBN, Genre, Description, CoverUrl, RentalPrice, Copies } = row;
+
+        if (!Title || !Author || !ISBN || !Genre) {
+          throw new Error('Missing required fields (Title, Author, ISBN, Genre)');
+        }
+
+        // Check if ISBN exists
+        const existingBook = await this.prisma.book.findUnique({ where: { isbn: ISBN } });
+        if (existingBook) {
+          throw new Error(`ISBN ${ISBN} already exists`);
+        }
+
+        // Handle Category (Genre)
+        let category = await this.prisma.category.findUnique({ where: { name: Genre } });
+        if (!category) {
+          category = await this.prisma.category.create({ data: { name: Genre } });
+        }
+
+        // Handle Author
+        let author = await this.prisma.author.findFirst({ where: { name: { equals: Author, mode: 'insensitive' } } });
+        if (!author) {
+          author = await this.prisma.author.create({ data: { name: Author } });
+        }
+
+        // Create Book
+        const book = await this.prisma.book.create({
+          data: {
+            title: Title,
+            isbn: ISBN,
+            authorId: author.id,
+            categoryId: category.id,
+            description: Description || '',
+            coverUrl: CoverUrl || '',
+            rentalPrice: Number(RentalPrice) || 0,
+            publishedYear: new Date().getFullYear(), // Default or add column
+            copies: 0,
+          }
+        });
+
+        // Add Inventory
+        const copiesCount = Number(Copies) || 1;
+        for (let i = 0; i < copiesCount; i++) {
+          await this.inventoryService.addCopy(book.id, {
+            barcode: `${book.isbn}-${i + 1}`,
+            location: 'Main Stacks'
+          }, userId);
+        }
+
+        // Update availability
+        await this.checkAvailability(book.id);
+
+        results.success++;
+      } catch (error: any) {
+        results.errors.push(`Line ${line}: ${error.message}`);
+      }
+    }
+
+    return results;
+  }
 
   async create(dto: CreateBookDto, userId: string): Promise<Book> {
     const { authorName, copies, ...bookData } = dto;

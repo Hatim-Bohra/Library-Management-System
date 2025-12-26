@@ -16,6 +16,7 @@ import { Plus } from 'lucide-react';
 
 import { BookDialog } from '@/components/books/book-dialog';
 import { InventoryDialog } from '@/components/books/inventory-dialog';
+import { ImportBookDialog } from '@/components/books/import-book-dialog';
 
 export default function AdminBooksPage() {
     const { data: books, isLoading } = useQuery({
@@ -32,7 +33,10 @@ export default function AdminBooksPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-3xl font-bold tracking-tight">Manage Books</h2>
-                <BookDialog />
+                <div className="flex gap-2">
+                    <ImportBookDialog />
+                    <BookDialog />
+                </div>
             </div>
 
             <div className="rounded-md border">

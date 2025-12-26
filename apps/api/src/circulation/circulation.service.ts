@@ -8,7 +8,7 @@ import { FineType } from '@prisma/client';
 export class CirculationService {
   constructor(private prisma: PrismaService) { }
 
-  async checkOut(createLoanDto: CreateLoanDto) {
+  checkOut(createLoanDto: CreateLoanDto) {
     const { userId, bookId } = createLoanDto;
 
     return this.prisma.$transaction(async (tx) => {

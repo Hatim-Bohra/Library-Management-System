@@ -11,7 +11,9 @@ import {
   HttpCode,
   HttpStatus,
   UseInterceptors, // Added UseInterceptors
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager'; // Added CacheInterceptor, CacheTTL
 import { BooksService } from './books.service';
 import { CreateBookDto, UpdateBookDto } from './dto';
@@ -33,6 +35,15 @@ export class BooksController {
   @ApiOperation({ summary: 'Create a new book (Admin/Librarian)' })
   create(@Body() createBookDto: CreateBookDto, @GetCurrentUserId() userId: string) {
     return this.booksService.create(createBookDto, userId);
+  }
+
+  @Roles(Role.ADMIN, Role.LIBRARIAN)
+  @ApiBearerAuth()
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Import books from CSV' })
+  importBooks(@UploadedFile() file: Express.Multer.File, @GetCurrentUserId() userId: string) {
+    return this.booksService.importBooks(file, userId);
   }
 
   @Public()

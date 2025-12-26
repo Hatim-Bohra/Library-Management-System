@@ -8,7 +8,10 @@ import { BookGrid } from '@/components/book-grid';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FeaturedHero } from '@/components/featured-hero';
+import { BookCarousel } from '@/components/book-carousel';
+import { CategoryPills } from '@/components/category-pills';
+import Link from 'next/link';
 
 export default function Home() {
   const [search, setSearch] = useState('');
@@ -32,89 +35,98 @@ export default function Home() {
       if (category && category !== 'all') params.categoryId = category;
       const { data } = await api.get('/books', { params });
       return data;
-    }
+    },
+    refetchOnWindowFocus: false,
   });
 
   // Fetch Categories
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const { data } = await api.get('/categories'); // Ensure this endpoint exists or mock it? 
-      // Wait, I didn't check if /categories exists public. 
-      // If not, I should probably fail gracefully or check permissions. 
-      // Assuming it does or I'll implement it quickly if needed.
+      const { data } = await api.get('/categories');
       return data;
     },
     retry: false
   });
 
+  // Derived state for "Trending" (Just slicing for demo/MVP)
+  // Ideally this would be a separate API call /books/trending
+  const trendingBooks = books ? books.slice(0, 8) : [];
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <PublicNav />
 
-      {/* Hero Section */}
-      <section className="w-full flex-1 flex items-center justify-center py-12 md:py-24 lg:py-32 xl:py-48 bg-gray-100 dark:bg-gray-900 border-b">
-        <div className="container mx-auto px-4 md:px-6 text-center">
-          <div className="max-w-3xl mx-auto space-y-4">
-            <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-              Discover Your Next Great Read
-            </h1>
-            <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
-              Browse our extensive collection of books, journals, and magazines.
-            </p>
-            <div className="flex w-full max-w-sm items-center space-x-2 mx-auto pt-4">
-              <Input
-                type="search"
-                placeholder="Search by title, author, or ISBN..."
-                className="bg-background"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <Button type="submit"><Search className="h-4 w-4" /></Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* 1. Feature Hero - Spotlight */}
+      <FeaturedHero />
 
-      {/* Catalog Section */}
-      <section id="catalog" className="w-full py-12 md:py-24 lg:py-32">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Catalog</h2>
+      {/* 2. Trending Carousel - Social Proof */}
+      <BookCarousel title="Trending Now" books={trendingBooks} loading={booksLoading} />
 
-            {/* Filter */}
-            <div className="w-full md:w-[200px]">
-              <Select onValueChange={setCategory} defaultValue="all">
-                <SelectTrigger>
-                  <SelectValue placeholder="All Genres" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Genres</SelectItem>
-                  {categories?.map((cat: any) => (
-                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      {/* 3. Main Catalog Section */}
+      <section id="catalog" className="w-full py-12 bg-muted/30">
+        <div className="container mx-auto px-4 md:px-6 space-y-8">
+
+          {/* Header & Filters */}
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight">Curated Collection</h2>
+                <p className="text-muted-foreground mt-1">Explore our entire library of knowledge.</p>
+              </div>
+
+              {/* Search Bar - Sticky on Mobile? */}
+              <div className="relative w-full md:w-[300px]">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search title, author..."
+                  className="pl-9 bg-background"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
             </div>
+
+            {/* Category Pills */}
+            <CategoryPills
+              categories={categories}
+              selectedId={category}
+              onSelect={setCategory}
+            />
           </div>
 
+          {/* Grid */}
           {booksLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map(i => <div key={i} className="h-[400px] bg-muted animate-pulse rounded-lg" />)}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => <div key={i} className="h-[280px] bg-muted animate-pulse rounded-xl" />)}
             </div>
           ) : (
-            <div className="w-full">
-              <BookGrid books={books} />
-            </div>
+            <>
+              {books && books.length > 0 ? (
+                <div className="w-full">
+                  <BookGrid books={books} />
+                </div>
+              ) : (
+                <div className="text-center py-20 text-muted-foreground">
+                  <p>No books found matching your criteria.</p>
+                  <Button variant="link" onClick={() => { setSearch(''); setCategory('all'); }}>Clear Filters</Button>
+                </div>
+              )}
+            </>
           )}
 
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="w-full py-6 bg-gray-100 dark:bg-gray-900 border-t">
-        <div className="container mx-auto px-4 md:px-6 text-center text-sm text-gray-500">
-          © 2024 Acmei Library System. All rights reserved.
+      <footer className="w-full py-6 bg-muted border-t">
+        <div className="container mx-auto px-4 md:px-6 flex justify-between items-center text-sm text-muted-foreground">
+          <p>© 2024 Lumina Library. All rights reserved.</p>
+          <div className="flex gap-4">
+            <Link href="#" className="hover:underline">Privacy</Link>
+            <Link href="#" className="hover:underline">Terms</Link>
+          </div>
         </div>
       </footer>
     </div>
