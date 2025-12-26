@@ -22,8 +22,8 @@ export function BookCard({ book }: BookCardProps) {
     const availableCount = book.inventoryItems ? book.inventoryItems.filter((i: any) => i.status === 'AVAILABLE').length : 0;
 
     return (
-        <Card className="flex flex-col h-full overflow-hidden group">
-            <div className="aspect-[2/3] w-full bg-muted relative overflow-hidden">
+        <Card className="flex flex-col h-full overflow-hidden transition-all hover:shadow-lg border-0 bg-card/50">
+            <div className="aspect-[2/3] w-full bg-muted relative flex items-center justify-center overflow-hidden rounded-t-xl group">
                 {book.coverUrl ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
@@ -32,40 +32,46 @@ export function BookCard({ book }: BookCardProps) {
                         className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                     />
                 ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-muted/50">
-                        <span className="text-xl font-bold opacity-20">No Cover</span>
+                    <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+                        <span className="text-4xl font-bold opacity-20">Book</span>
                     </div>
                 )}
-            </div>
-            <CardHeader>
-                <div className="flex justify-between items-start">
-                    <div>
-                        <CardTitle className="line-clamp-2">{book.title}</CardTitle>
-                        <CardDescription>{book.author.name}</CardDescription>
-                    </div>
-                    <div className="flex flex-col gap-2 items-end">
-                        <Badge variant={book.isAvailable ? 'default' : 'secondary'}>
-                            {availableCount > 0 ? 'Available' : 'Out of Stock'}
+
+                {/* Overlay Badges */}
+                <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+                    <Badge variant={book.isAvailable ? 'secondary' : 'destructive'} className={book.isAvailable ? "bg-green-500/90 text-white shadow-sm backdrop-blur-sm" : "shadow-sm"}>
+                        {availableCount > 0 ? 'Available' : 'Out of Stock'}
+                    </Badge>
+                    {Number(book.rentalPrice) > 0 && (
+                        <Badge variant="outline" className="bg-background/80 backdrop-blur-sm text-green-700 border-green-200">
+                            Rent: ${Number(book.rentalPrice).toFixed(2)}
                         </Badge>
-                        {Number(book.rentalPrice) > 0 && (
-                            <Badge variant="outline" className="text-green-600 border-green-600">
-                                Rent: ${Number(book.rentalPrice).toFixed(2)}
-                            </Badge>
-                        )}
-                    </div>
+                    )}
                 </div>
+            </div>
+
+            <CardHeader className="p-3 pb-0 space-y-1">
+                <CardTitle className="line-clamp-1 text-base font-semibold" title={book.title}>
+                    {book.title}
+                </CardTitle>
+                <CardDescription className="line-clamp-1 text-xs">
+                    {book.author.name}
+                </CardDescription>
             </CardHeader>
-            <CardContent className="flex-1">
-                <p className="text-sm text-muted-foreground">
-                    {availableCount} available / {book.copies} copies in library
-                </p>
+
+            <CardContent className="p-3 pt-1 flex-1">
+                <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
+                    <span>{book.copies} copies</span>
+                    <span>{availableCount} left</span>
+                </div>
             </CardContent>
-            <CardFooter>
+
+            <CardFooter className="p-3 pt-0">
                 <RequestDialog
                     bookId={book.id}
                     bookTitle={book.title}
                     rentalPrice={Number(book.rentalPrice || 0)}
-                    trigger={<Button className="w-full" disabled={!book.isAvailable}>Request</Button>}
+                    trigger={<Button className="w-full h-8 text-xs" disabled={!book.isAvailable}>Request</Button>}
                 />
             </CardFooter>
         </Card>

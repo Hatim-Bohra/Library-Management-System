@@ -81,9 +81,11 @@ export default function BooksPage() {
                 <div>Error loading books: {(error as any).message}</div>
             ) : (
                 <>
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                         {books?.map((book: any) => (
-                            <BookCard key={book.id} book={book} />
+                            <div key={book.id} className="h-[320px]">
+                                <BookCard book={book} />
+                            </div>
                         ))}
                     </div>
                     {books?.length === 0 && <p className="text-muted-foreground">No books found matching your criteria.</p>}
