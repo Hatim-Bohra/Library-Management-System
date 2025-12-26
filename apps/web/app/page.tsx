@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { PublicNav } from '@/components/public-nav';
 import { BookGrid } from '@/components/book-grid';
@@ -26,18 +26,34 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Fetch Books
-  const { data: books, isLoading: booksLoading } = useQuery({
+  // Fetch Books with Infinite Scroll
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: booksLoading
+  } = useInfiniteQuery({
     queryKey: ['public-books', debouncedSearch, category],
-    queryFn: async () => {
-      const params: any = {};
+    queryFn: async ({ pageParam = 1 }) => {
+      const params: any = { page: pageParam, limit: 24 }; // 24 is divisible by 2,3,4
       if (debouncedSearch) params.q = debouncedSearch;
       if (category && category !== 'all') params.categoryId = category;
+
       const { data } = await api.get('/books', { params });
-      return data;
+      return data; // Expects API to return array directly based on current Controller
     },
+    getNextPageParam: (lastPage, allPages) => {
+      // API currently returns just an array, so we don't know total.
+      // Heuristic: If lastPage < limit, no more.
+      return lastPage.length === 24 ? allPages.length + 1 : undefined;
+    },
+    initialPageParam: 1,
     refetchOnWindowFocus: false,
   });
+
+  // Flatten pages
+  const books = data?.pages.flatMap(page => page) || [];
 
   // Fetch Categories
   const { data: categories } = useQuery({
