@@ -22,6 +22,18 @@ export class CirculationController {
     return this.circulationService.checkIn(id);
   }
 
+  @Post('loans/:id/lost')
+  @ApiOperation({ summary: 'Report a book as lost' })
+  reportLost(@Param('id') id: string, @GetCurrentUser() user: JwtPayload) {
+    return this.circulationService.reportLost(id, user.sub);
+  }
+
+  @Post('fines/:id/pay')
+  @ApiOperation({ summary: 'Pay a fine' })
+  payFine(@Param('id') id: string, @GetCurrentUser() user: JwtPayload) {
+    return this.circulationService.payFine(id, user.sub);
+  }
+
   @Get('loans')
   @ApiOperation({ summary: 'List all loans' })
   findAll(@GetCurrentUser() user: JwtPayload) {

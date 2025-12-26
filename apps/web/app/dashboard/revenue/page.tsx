@@ -96,7 +96,7 @@ export default function RevenuePage() {
             </div>
 
             {/* Key Metrics Cards */}
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -129,7 +129,19 @@ export default function RevenuePage() {
                     <CardContent>
                         <div className="text-2xl font-bold">${(breakdown.FINE_PAYMENT || 0).toFixed(2)}</div>
                         <p className="text-xs text-muted-foreground">
-                            From paid fines
+                            Total fines
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Lost Books</CardTitle>
+                        <AlertCircle className="h-4 w-4 text-red-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">${(breakdown.LOST || 0).toFixed(2)}</div>
+                        <p className="text-xs text-muted-foreground">
+                            Replacement fees
                         </p>
                     </CardContent>
                 </Card>

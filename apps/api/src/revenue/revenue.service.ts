@@ -43,10 +43,12 @@ export class RevenueService {
         const timeSeries: Record<string, number> = {};
 
         transactions.forEach(tx => {
-            const amount = Number(tx.amount);
+            // Transactions are stored as negative values (User Spend). Revenue is positive.
+            const amount = Math.abs(Number(tx.amount));
             totalRevenue += amount;
 
             if (tx.type === 'RENTAL') breakdown.RENTAL += amount;
+            // FINE_PAYMENT is generic in Transaction. We will refine this with Fine table query below.
             if (tx.type === 'FINE_PAYMENT') breakdown['FINE_PAYMENT'] += amount;
 
             const date = new Date(tx.createdAt); // createdAt is reliable
@@ -69,6 +71,38 @@ export class RevenueService {
             timeSeries[key] = (timeSeries[key] || 0) + amount;
         });
 
+        // 4. Refine Breakdown: Split FINE_PAYMENT into OVERDUE and LOST
+        // We fetch Paid Fines in this period to get the ratio or exact amounts
+        const paidFines = await this.prisma.fine.findMany({
+            where: {
+                paid: true,
+                paidAt: {
+                    gte: start,
+                    lte: end
+                }
+            }
+        });
+
+        const fineBreakdown = {
+            OVERDUE: 0,
+            LOST: 0,
+            DAMAGE: 0,
+            MANUAL: 0
+        };
+
+        paidFines.forEach(f => {
+            const amt = Number(f.amount);
+            if (fineBreakdown[f.type] !== undefined) {
+                fineBreakdown[f.type] += amt;
+            }
+        });
+
+        // Merge into main breakdown
+        const finalBreakdown = {
+            ...breakdown,
+            ...fineBreakdown
+        };
+
         // Format chart data sorted by date
         const chartData = Object.entries(timeSeries)
             .map(([date, value]) => ({ date, value }))
@@ -76,7 +110,7 @@ export class RevenueService {
 
         return {
             totalRevenue,
-            breakdown,
+            breakdown: finalBreakdown,
             chartData
         };
     }
