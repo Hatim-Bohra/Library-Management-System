@@ -51,7 +51,7 @@ export default function DashboardLayout({
 
     return (
         <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
-            <div className="hidden border-r bg-gray-100/40 lg:block dark:bg-gray-800/40">
+            <div className="hidden border-r bg-muted/40 lg:block">
                 <div className="flex h-full max-h-screen flex-col gap-2">
                     <div className="flex h-14 items-center border-b px-6">
                         <Link className="flex items-center gap-2 font-semibold" href="/">
@@ -68,8 +68,8 @@ export default function DashboardLayout({
                                     className={cn(
                                         "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
                                         pathname === item.href
-                                            ? "bg-gray-100 text-primary dark:bg-gray-800"
-                                            : "text-gray-500 dark:text-gray-400"
+                                            ? "bg-muted text-primary"
+                                            : "text-muted-foreground hover:bg-muted/50"
                                     )}
                                 >
                                     <item.icon className="h-4 w-4" />
@@ -87,7 +87,7 @@ export default function DashboardLayout({
                 </div>
             </div>
             <div className="flex flex-col">
-                <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-gray-100/40 px-6 dark:bg-gray-800/40">
+                <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-muted/40 px-6">
                     <div className="flex w-full items-center justify-between">
                         <h1 className="text-lg font-semibold">Dashboard</h1>
                         <div className="flex items-center gap-2">
