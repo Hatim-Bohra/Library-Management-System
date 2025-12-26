@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import Image from 'next/image';
+
 
 import { BookDialog } from '@/components/books/book-dialog';
 import { InventoryDialog } from '@/components/books/inventory-dialog';
@@ -54,12 +54,11 @@ export default function AdminBooksPage() {
                                 <TableCell>
                                     {book.coverUrl ? (
                                         <div className="relative h-10 w-8">
-                                            <Image
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img
                                                 src={book.coverUrl.startsWith('http') ? book.coverUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${book.coverUrl}`}
                                                 alt="Cover"
-                                                fill
-                                                className="object-cover rounded shadow-sm"
-                                                sizes="32px"
+                                                className="object-cover w-full h-full rounded shadow-sm"
                                             />
                                         </div>
                                     ) : (

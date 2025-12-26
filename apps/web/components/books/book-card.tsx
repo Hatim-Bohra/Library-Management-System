@@ -1,7 +1,6 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import Image from 'next/image';
 import { RequestDialog } from '@/components/requests/request-dialog';
 
 interface Book {
@@ -26,12 +25,11 @@ export function BookCard({ book }: BookCardProps) {
         <Card className="flex flex-col h-full overflow-hidden group">
             <div className="aspect-[2/3] w-full bg-muted relative overflow-hidden">
                 {book.coverUrl ? (
-                    <Image
-                        src={book.coverUrl.startsWith('http') ? book.coverUrl : book.coverUrl}
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                        src={book.coverUrl.startsWith('http') ? book.coverUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${book.coverUrl}`}
                         alt={book.title}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                     />
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-muted/50">

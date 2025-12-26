@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { NotificationTriggerType, NotificationType } from '@prisma/client';
+import { NotificationTriggerType, NotificationType, Role } from '@prisma/client';
 
 @Injectable()
 export class NotificationsService {
@@ -124,6 +124,35 @@ export class NotificationsService {
     getUnreadCount(userId: string) {
         return this.prisma.notification.count({
             where: { userId, read: false },
+        });
+    }
+
+    async notifyRoles(roles: Role[], message: string, type: NotificationType) {
+        const users = await this.prisma.user.findMany({
+            where: { role: { in: roles } },
+            select: { id: true }
+        });
+
+        if (users.length === 0) return;
+
+        await this.prisma.notification.createMany({
+            data: users.map(u => ({
+                userId: u.id,
+                message,
+                type,
+                read: false
+            }))
+        });
+    }
+
+    async notifyUser(userId: string, message: string, type: NotificationType) {
+        await this.prisma.notification.create({
+            data: {
+                userId,
+                message,
+                type,
+                read: false
+            }
         });
     }
 

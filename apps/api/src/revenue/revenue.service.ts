@@ -6,45 +6,60 @@ import { FineType } from '@prisma/client';
 export class RevenueService {
     constructor(private prisma: PrismaService) { }
 
-    async getRevenueStats(period: 'daily' | 'monthly' | 'yearly' = 'monthly') {
-        // Aggregation logic using raw query for date truncation or JS processing
-        // Prisma .groupBy on Date fields is limited for truncation without raw SQL in some versions.
-        // Given Postgres, using $queryRaw is best for date_trunc, but let's try JS processing for database agnostic safety if stats are small,
-        // Or prefer $queryRaw for "production-grade".
-        // "Production-grade" implies efficient SQL.
+    async getRevenueStats(period: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'monthly', startDate?: Date, endDate?: Date) {
+        // Default timeframe if not provided based on period
+        let start = startDate;
+        const end = endDate || new Date();
 
-        // Let's use Prisma to fetch paid fines and aggregate in memory for simplicity/safety unless data volume is huge,
-        // OR use raw query. Let's start with all paid fines for now (assuming not millions yet). 
-        // Actually, let's use groupBy on `type` for strict breakdown, but for timeline we need date.
+        if (!start) {
+            const now = new Date();
+            start = new Date();
+            if (period === 'daily') start.setDate(now.getDate() - 30); // Last 30 days
+            if (period === 'weekly') start.setDate(now.getDate() - 90); // Last 12 weeks
+            if (period === 'monthly') start.setMonth(now.getMonth() - 12); // Last 12 months
+            if (period === 'yearly') start.setFullYear(now.getFullYear() - 5); // Last 5 years
+        }
 
-        const fines = await this.prisma.fine.findMany({
-            where: { paid: true },
-            select: { amount: true, paidAt: true, type: true }
+        // Fetch transactions (RENTAL, FINE_PAYMENT)
+        // DEPOSIT is not revenue, it's liability (user funds). Revenue is realized when they spend it.
+        const transactions = await this.prisma.transaction.findMany({
+            where: {
+                type: { in: ['RENTAL', 'FINE_PAYMENT'] },
+                status: 'COMPLETED',
+                createdAt: {
+                    gte: start,
+                    lte: end
+                }
+            },
+            select: { amount: true, createdAt: true, type: true }
         });
 
         const breakdown = {
-            OVERDUE: 0,
-            LOST: 0,
-            DAMAGE: 0,
-            MANUAL: 0
+            RENTAL: 0,
+            FINE_PAYMENT: 0
         };
 
         let totalRevenue = 0;
         const timeSeries: Record<string, number> = {};
 
-        fines.forEach(fine => {
-            const amount = Number(fine.amount);
+        transactions.forEach(tx => {
+            const amount = Number(tx.amount);
             totalRevenue += amount;
 
-            if (fine.type) {
-                breakdown[fine.type] += amount;
-            }
+            if (tx.type === 'RENTAL') breakdown.RENTAL += amount;
+            if (tx.type === 'FINE_PAYMENT') breakdown['FINE_PAYMENT'] += amount;
 
-            const date = new Date(fine.paidAt!); // paidAt is not null due to where query (usually), strict check needed
+            const date = new Date(tx.createdAt); // createdAt is reliable
             let key = '';
 
             if (period === 'daily') {
                 key = date.toISOString().split('T')[0]; // YYYY-MM-DD
+            } else if (period === 'weekly') {
+                // Get start of week
+                const d = new Date(date);
+                const day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1); // adjust when day is sunday
+                const monday = new Date(d.setDate(diff));
+                key = monday.toISOString().split('T')[0];
             } else if (period === 'monthly') {
                 key = date.toISOString().slice(0, 7); // YYYY-MM
             } else {
@@ -54,7 +69,7 @@ export class RevenueService {
             timeSeries[key] = (timeSeries[key] || 0) + amount;
         });
 
-        // Format chart data
+        // Format chart data sorted by date
         const chartData = Object.entries(timeSeries)
             .map(([date, value]) => ({ date, value }))
             .sort((a, b) => a.date.localeCompare(b.date));

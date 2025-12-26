@@ -14,13 +14,19 @@ export class RevenueController {
 
     @Get('analytics')
     @ApiOperation({ summary: 'Get revenue analytics' })
+    @Get('analytics')
+    @ApiOperation({ summary: 'Get revenue analytics' })
     getAnalytics(
-        @Query('period') period: 'daily' | 'monthly' | 'yearly',
+        @Query('period') period: 'daily' | 'weekly' | 'monthly' | 'yearly',
+        @Query('startDate') startDate: string,
+        @Query('endDate') endDate: string,
         @GetCurrentUser() user: JwtPayload,
     ) {
         if (user.role === Role.LIBRARIAN && period !== 'daily') {
             throw new ForbiddenException('Librarians can only view daily revenue');
         }
-        return this.revenueService.getRevenueStats(period);
+        const start = startDate ? new Date(startDate) : undefined;
+        const end = endDate ? new Date(endDate) : undefined;
+        return this.revenueService.getRevenueStats(period, start, end);
     }
 }

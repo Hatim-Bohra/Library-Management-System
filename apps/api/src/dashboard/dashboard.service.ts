@@ -55,8 +55,22 @@ export class DashboardService {
             this.prisma.inventoryItem.count({ where: { status: 'LOST' } }),
 
             // Revenue
-            this.prisma.fine.aggregate({ _sum: { amount: true }, where: { paid: true } }),
-            this.prisma.fine.aggregate({ _sum: { amount: true }, where: { paid: true, paidAt: { gte: startOfDay } } }),
+            // Revenue (Using Transaction table now)
+            this.prisma.transaction.aggregate({
+                _sum: { amount: true },
+                where: {
+                    type: { in: ['RENTAL', 'FINE_PAYMENT'] },
+                    status: 'COMPLETED'
+                }
+            }),
+            this.prisma.transaction.aggregate({
+                _sum: { amount: true },
+                where: {
+                    type: { in: ['RENTAL', 'FINE_PAYMENT'] },
+                    status: 'COMPLETED',
+                    createdAt: { gte: startOfDay }
+                }
+            }),
             this.prisma.fine.count({ where: { paid: false } })
         ]);
 

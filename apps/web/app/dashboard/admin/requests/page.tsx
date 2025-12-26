@@ -78,6 +78,7 @@ export default function AdminRequestsPage() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['admin-requests'] });
+            queryClient.invalidateQueries({ queryKey: ['revenue-analytics'] }); // Update revenue!
             toast.success('Request fulfilled');
         },
         onError: () => toast.error('Failed to fulfill request')

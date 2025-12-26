@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Pencil, Loader2, Image as ImageIcon } from 'lucide-react';
-import Image from 'next/image';
 import { toast } from 'sonner';
 
 import api from '@/lib/api';
@@ -205,12 +204,11 @@ export function BookDialog({ initialData }: BookDialogProps) {
                                         // The backend returns `/uploads/covers/...` relative URL.
                                         // Next.js Image component needs absolute or configured domain.
                                         // Using standard img for now.
-                                        <Image
-                                            src={(coverUrl || '').startsWith('http') ? coverUrl : coverUrl}
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                            src={(coverUrl || '').startsWith('http') ? coverUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${coverUrl}`}
                                             alt="Cover"
-                                            fill
-                                            className="object-cover"
-                                            sizes="(max-width: 768px) 100vw, 33vw"
+                                            className="object-cover w-full h-full"
                                         />
                                     ) : (
                                         <ImageIcon className="h-10 w-10 text-muted-foreground" />

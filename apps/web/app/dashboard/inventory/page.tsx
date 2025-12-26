@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useDebounce } from '@/lib/hooks/use-debounce';
+import { InventoryDialog } from '@/components/books/inventory-dialog';
 
 export default function InventoryDashboard() {
     const [search, setSearch] = useState('');
@@ -94,9 +95,7 @@ export default function InventoryDashboard() {
                                         ) : '-'}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button variant="outline" size="sm" onClick={() => window.location.href = `/dashboard/books/${book.id}`}>
-                                            Manage
-                                        </Button>
+                                        <InventoryDialog bookId={book.id} bookTitle={book.title} trigger={<Button variant="outline" size="sm">Manage</Button>} />
                                     </TableCell>
                                 </TableRow>
                             ))

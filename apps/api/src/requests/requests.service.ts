@@ -19,12 +19,16 @@ import { FinesService } from '../fines/fines.service';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { BooksService } from '../books/books.service';
 
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '@prisma/client';
+
 @Injectable()
 export class RequestsService {
   constructor(
     private prisma: PrismaService,
     private finesService: FinesService,
     private booksService: BooksService,
+    private notificationsService: NotificationsService,
   ) { }
 
   async create(userId: string, createRequestDto: CreateRequestDto) {
@@ -100,7 +104,7 @@ export class RequestsService {
       );
     }
 
-    return this.prisma.bookRequest.create({
+    const request = await this.prisma.bookRequest.create({
       data: {
         userId,
         bookId,
@@ -110,6 +114,15 @@ export class RequestsService {
         returnDate: createRequestDto.returnDate ? new Date(createRequestDto.returnDate) : undefined,
       },
     });
+
+    // Notify Librarians and Admins
+    await this.notificationsService.notifyRoles(
+      [Role.ADMIN, Role.LIBRARIAN],
+      `New Book Request: ${type} request for "${book.title}"`,
+      NotificationType.INFO
+    );
+
+    return request;
   }
 
   findAll(role: Role, userId: string, query?: any) {
@@ -307,6 +320,31 @@ export class RequestsService {
         ? await this.finesService.getApplicableRule(user.role)
         : null;
 
+      // 0. Check Funds & Deduct logic
+      const book = await tx.book.findUniqueOrThrow({ where: { id: request.bookId } });
+      const rentalPrice = Number(book.rentalPrice);
+
+      if (rentalPrice > 0) {
+        const user = await tx.user.findUniqueOrThrow({ where: { id: request.userId } });
+        if (Number(user.walletBalance) < rentalPrice) {
+          throw new BadRequestException('Insufficient funds in wallet to collect this book');
+        }
+
+        await tx.user.update({
+          where: { id: request.userId },
+          data: { walletBalance: { decrement: rentalPrice } }
+        });
+
+        await tx.transaction.create({
+          data: {
+            userId: request.userId,
+            amount: -rentalPrice,
+            type: 'RENTAL',
+            status: 'COMPLETED'
+          }
+        });
+      }
+
       // Create Loan
       // Calculate due date based on requested duration
       let dueDate = new Date();
@@ -388,6 +426,31 @@ export class RequestsService {
       const rule = user
         ? await this.finesService.getApplicableRule(user.role)
         : null;
+
+      // 0. Check Funds & Deduct logic
+      const book = await tx.book.findUniqueOrThrow({ where: { id: request.bookId } });
+      const rentalPrice = Number(book.rentalPrice);
+
+      if (rentalPrice > 0) {
+        const user = await tx.user.findUniqueOrThrow({ where: { id: request.userId } });
+        if (Number(user.walletBalance) < rentalPrice) {
+          throw new BadRequestException('Insufficient funds in wallet to fulfill delivery');
+        }
+
+        await tx.user.update({
+          where: { id: request.userId },
+          data: { walletBalance: { decrement: rentalPrice } }
+        });
+
+        await tx.transaction.create({
+          data: {
+            userId: request.userId,
+            amount: -rentalPrice,
+            type: 'RENTAL',
+            status: 'COMPLETED'
+          }
+        });
+      }
 
       // Create Loan (Timer starts NOW)
       let dueDate = new Date();

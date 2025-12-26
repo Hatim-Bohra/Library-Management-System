@@ -36,13 +36,14 @@ import api from '@/lib/api';
 interface InventoryDialogProps {
     bookId: string;
     bookTitle: string;
+    trigger?: React.ReactNode;
 }
 
 const addSchema = z.object({
     location: z.string().min(1, 'Location required').default('Main Stacks'),
 });
 
-export function InventoryDialog({ bookId, bookTitle }: InventoryDialogProps) {
+export function InventoryDialog({ bookId, bookTitle, trigger }: InventoryDialogProps) {
     const [open, setOpen] = useState(false);
     const queryClient = useQueryClient();
 
@@ -87,7 +88,7 @@ export function InventoryDialog({ bookId, bookTitle }: InventoryDialogProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="sm">Inventory</Button>
+                {trigger || <Button variant="ghost" size="sm">Inventory</Button>}
             </DialogTrigger>
             <DialogContent className="max-w-3xl">
                 <DialogHeader>

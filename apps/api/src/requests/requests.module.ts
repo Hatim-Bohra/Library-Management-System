@@ -7,9 +7,10 @@ import { DatabaseModule } from '../database/database.module';
 import { AuditModule } from '../audit/audit.module';
 
 import { BooksModule } from '../books/books.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [DatabaseModule, FinesModule, AuditModule, BooksModule],
+  imports: [DatabaseModule, FinesModule, AuditModule, BooksModule, NotificationsModule],
   controllers: [RequestsController],
   providers: [RequestsService],
 })

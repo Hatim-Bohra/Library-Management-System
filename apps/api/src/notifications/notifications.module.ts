@@ -6,6 +6,7 @@ import { AuditModule } from '../audit/audit.module';
 @Module({
   imports: [AuditModule],
   providers: [NotificationsService],
-  controllers: [NotificationsController]
+  controllers: [NotificationsController],
+  exports: [NotificationsService]
 })
 export class NotificationsModule { }
