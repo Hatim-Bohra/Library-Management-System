@@ -3,10 +3,14 @@ import { PrismaService } from '../database/prisma.service';
 import { CreateLoanDto } from './dto/create-loan.dto';
 import { JwtPayload } from '../auth/types/jwtPayload.type';
 import { FineType } from '@prisma/client';
+import { FinesService } from '../fines/fines.service';
 
 @Injectable()
 export class CirculationService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private finesService: FinesService,
+  ) { }
 
   checkOut(createLoanDto: CreateLoanDto) {
     const { userId, bookId } = createLoanDto;
@@ -43,12 +47,16 @@ export class CirculationService {
         });
       }
 
-      // 4. Create Loan
+      // 4. Get Loan Policy
+      const policy = await tx.systemPolicy.findFirst();
+      const loanDays = policy?.defaultLoanDurationDays ?? 14;
+
+      // 5. Create Loan
       return tx.loan.create({
         data: {
           userId,
           bookId,
-          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
+          dueDate: new Date(Date.now() + loanDays * 24 * 60 * 60 * 1000),
         },
       });
     });
@@ -74,33 +82,24 @@ export class CirculationService {
       });
 
       // 2. Calculate Fine
-      // Use snapshot rules from the loan
-      const endDate = new Date();
-      const diffTime = endDate.getTime() - new Date(loan.dueDate).getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      // Prepare object for FinesService (adapting field names if necessary)
+      // FinesService expects: { dueDate, returnedAt, ruleGracePeriod, ruleDailyRate, ruleMaxFine }
+      const overdueFine = this.finesService.calculateOverdueFine({
+        dueDate: loan.dueDate,
+        returnedAt: new Date(),
+        ruleGracePeriod: loan['ruleGracePeriod'] ?? 0,
+        ruleDailyRate: loan['ruleDailyRate'] ?? 0,
+        ruleMaxFine: loan['ruleMaxFine'],
+      });
 
-      // Use Snapshot values from Loan, default to 0 if missing (though they shouldn't be)
-      const gracePeriod = loan['ruleGracePeriod'] ?? 0;
-      const dailyRate = Number(loan['ruleDailyRate'] ?? 0);
-      const maxFine = loan['ruleMaxFine'] ? Number(loan['ruleMaxFine']) : null;
-
-      if (diffDays > gracePeriod) {
-        const chargeableDays = diffDays - gracePeriod;
-        let amount = chargeableDays * dailyRate;
-
-        if (maxFine && amount > maxFine) {
-          amount = maxFine;
-        }
-
-        if (amount > 0) {
-          await tx.fine.create({
-            data: {
-              loanId: loan.id,
-              amount,
-              type: FineType.OVERDUE,
-            }
-          });
-        }
+      if (overdueFine > 0) {
+        await tx.fine.create({
+          data: {
+            loanId: loan.id,
+            amount: overdueFine,
+            type: FineType.OVERDUE,
+          }
+        });
       }
 
       return updatedLoan;
@@ -110,7 +109,7 @@ export class CirculationService {
   async reportLost(loanId: string, userId: string) {
     const loan = await this.prisma.loan.findUnique({
       where: { id: loanId },
-      include: { book: true }
+      include: { book: true, user: true }
     });
 
     if (!loan) throw new BadRequestException('Loan not found');
@@ -156,10 +155,15 @@ export class CirculationService {
       }
 
       // 3. Create Fine (Book Price + Processing Fee)
-      // Get System Policy (FineRule)
-      // Simplified: Just use Book Price + 10$ processing
+      // Get System Policy (FineRule) or Fallback
       const bookPrice = Number(loan.book.price || 0);
-      const processingFee = 10;
+
+      // Fetch FineRule for User's Role if available
+      const rule = await tx.fineRule.findUnique({
+        where: { role: loan.user.role }
+      });
+
+      const processingFee = rule?.lostBookProcessingFee ? Number(rule.lostBookProcessingFee) : 10;
       const amount = bookPrice + processingFee;
 
       const fine = await tx.fine.create({
@@ -182,6 +186,8 @@ export class CirculationService {
       if (fine.paid) throw new BadRequestException('Fine already paid');
 
       const user = await tx.user.findUnique({ where: { id: userId } });
+      if (!user) throw new BadRequestException('User not found');
+
       if (Number(user.walletBalance) < Number(fine.amount)) {
         throw new BadRequestException('Insufficient funds');
       }

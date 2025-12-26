@@ -22,7 +22,7 @@ export default function AdminBooksPage() {
     const { data: books, isLoading } = useQuery({
         queryKey: ['admin-books'],
         queryFn: async () => {
-            const { data } = await api.get('/books');
+            const { data } = await api.get('/books', { params: { limit: 1000 } });
             return data;
         }
     });

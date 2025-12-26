@@ -20,6 +20,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { RevenueModule } from './revenue/revenue.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { MailModule } from './mail/mail.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { AppController } from './app.controller';
@@ -55,6 +56,7 @@ import { AppService } from './app.service';
     UploadsModule,
     RevenueModule,
     NotificationsModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [

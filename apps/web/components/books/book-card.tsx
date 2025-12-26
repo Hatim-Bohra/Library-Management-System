@@ -54,11 +54,11 @@ export function BookCard({ book }: BookCardProps) {
                 </div>
             </div>
 
-            <CardHeader className="p-3 pb-0 space-y-1">
-                <CardTitle className="line-clamp-1 text-base font-semibold" title={book.title}>
+            <CardHeader className="p-2 pb-0 space-y-1">
+                <CardTitle className="line-clamp-1 text-sm font-semibold" title={book.title}>
                     {book.title}
                 </CardTitle>
-                <CardDescription className="line-clamp-1 text-xs">
+                <CardDescription className="line-clamp-1 text-[10px]">
                     {book.author.name}
                 </CardDescription>
             </CardHeader>

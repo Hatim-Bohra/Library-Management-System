@@ -2,7 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FinesService } from './fines.service';
 import { PrismaService } from '../database/prisma.service';
 import { Loan, LoanStatus } from '@repo/database';
-import { Decimal } from '@prisma/client/runtime/library'; // Import Decimal from prisma runtime
+import { Prisma } from '@prisma/client';
+const Decimal = Prisma.Decimal;
 
 describe('FinesService', () => {
   let service: FinesService;
@@ -56,7 +57,7 @@ describe('FinesService', () => {
       futureDue.setDate(now.getDate() + 1); // Due tomorrow
 
       expect(
-        service.calculateOverdueFine({ ...mockLoanBase, dueDate: futureDue }),
+        service.calculateOverdueFine({ ...mockLoanBase, dueDate: futureDue } as any),
       ).toBe(0);
     });
 
@@ -66,7 +67,7 @@ describe('FinesService', () => {
       pastDue.setDate(now.getDate() - 2); // Overdue by 2 days (Grace is 3)
 
       expect(
-        service.calculateOverdueFine({ ...mockLoanBase, dueDate: pastDue }),
+        service.calculateOverdueFine({ ...mockLoanBase, dueDate: pastDue } as any),
       ).toBe(0);
     });
 
@@ -77,7 +78,7 @@ describe('FinesService', () => {
       pastDue.setDate(now.getDate() - 5);
 
       expect(
-        service.calculateOverdueFine({ ...mockLoanBase, dueDate: pastDue }),
+        service.calculateOverdueFine({ ...mockLoanBase, dueDate: pastDue } as any),
       ).toBe(4);
     });
 
@@ -88,7 +89,7 @@ describe('FinesService', () => {
       pastDue.setDate(now.getDate() - 100);
 
       expect(
-        service.calculateOverdueFine({ ...mockLoanBase, dueDate: pastDue }),
+        service.calculateOverdueFine({ ...mockLoanBase, dueDate: pastDue } as any),
       ).toBe(50);
     });
   });

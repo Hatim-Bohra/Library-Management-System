@@ -5,6 +5,7 @@ if (!global.crypto) {
   (global as any).crypto = crypto;
 }
 
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -20,7 +21,11 @@ import { join } from 'path';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  app.enableCors();
+  app.enableCors({
+    origin: ['http://localhost:3000', 'http://localhost:3003'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
   app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
   }));
@@ -44,7 +49,8 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   const port = 3002;
+  const logger = new Logger('Bootstrap');
   await app.listen(port, '0.0.0.0');
-  console.log(`Application is running on: ${await app.getUrl()}`);
+  logger.log(`Application is running on: ${await app.getUrl()}`);
 }
 void bootstrap();

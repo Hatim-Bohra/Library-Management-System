@@ -60,8 +60,6 @@ services:
       - api
     networks:
       - lms-network
-    extra_hosts:
-      - "localhost:host-gateway"
 
 volumes:
   pgdata:

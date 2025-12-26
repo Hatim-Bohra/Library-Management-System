@@ -23,7 +23,8 @@ export class BooksService {
       columns: true,
       skip_empty_lines: true,
       trim: true,
-    }); // Cast to any[] or specific interface to avoid unknown error
+      bom: true,
+    }) as Record<string, any>[];
 
     const results = {
       success: 0,
@@ -34,22 +35,51 @@ export class BooksService {
     for (const [index, row] of records.entries()) {
       const line = index + 2; // +1 for header, +1 for 0-index
       try {
-        const { Title, Author, ISBN, Genre, Description, CoverUrl, RentalPrice, Copies } = row;
+        // Normalize keys to support variations (Title vs Book, Genre vs Genres)
+        // Helper to find value case-insensitively or by alias
+        const getField = (keys: string[]) => {
+          const rowKeys = Object.keys(row);
+          for (const k of keys) {
+            // Exact match
+            if (row[k] !== undefined) return row[k];
+            // Case insensitive match
+            const foundKey = rowKeys.find(rk => rk.toLowerCase() === k.toLowerCase());
+            if (foundKey && row[foundKey] !== undefined) return row[foundKey];
+          }
+          return undefined;
+        };
 
-        if (!Title || !Author || !ISBN || !Genre) {
-          throw new Error('Missing required fields (Title, Author, ISBN, Genre)');
+        const Title = getField(['Title', 'Book', 'Name']);
+        const Author = getField(['Author', 'Authors', 'Writer']);
+        const ISBN = getField(['ISBN', 'isbn13', 'isbn10']); // If missing, we might auto-generate? No, usually required for unique ID.
+        const Genre = getField(['Genre', 'Genres', 'Category']);
+        const Description = getField(['Description', 'Summary', 'Plot']);
+        const CoverUrl = getField(['CoverUrl', 'Cover', 'Image', 'Url']);
+        const RentalPrice = getField(['RentalPrice', 'Price', 'Cost']);
+        const Copies = getField(['Copies', 'Stock', 'Quantity']);
+
+        // Validation - flexible
+        if (!Title || !Author) {
+          // Skip if absolutely critical info missing. 
+          // If ISBN missing, we can maybe generate a fake one if strictly needed? 
+          // Let's enforce Title/Author at least.
+          throw new Error('Missing required fields (Title or Author)');
         }
 
+        // If ISBN missing, generate one for "custom" books
+        const finalISBN = ISBN || `AUTO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
         // Check if ISBN exists
-        const existingBook = await this.prisma.book.findUnique({ where: { isbn: ISBN } });
+        const existingBook = await this.prisma.book.findUnique({ where: { isbn: finalISBN } });
         if (existingBook) {
-          throw new Error(`ISBN ${ISBN} already exists`);
+          throw new Error(`ISBN ${finalISBN} already exists`);
         }
 
         // Handle Category (Genre)
-        let category = await this.prisma.category.findUnique({ where: { name: Genre } });
+        const genreName = Genre || 'General';
+        let category = await this.prisma.category.findUnique({ where: { name: genreName } });
         if (!category) {
-          category = await this.prisma.category.create({ data: { name: Genre } });
+          category = await this.prisma.category.create({ data: { name: genreName } });
         }
 
         // Handle Author
@@ -62,13 +92,13 @@ export class BooksService {
         const book = await this.prisma.book.create({
           data: {
             title: Title,
-            isbn: ISBN,
+            isbn: finalISBN,
             authorId: author.id,
             categoryId: category.id,
-            description: Description || '',
+            description: Description || 'No description available.',
             coverUrl: CoverUrl || '',
-            rentalPrice: Number(RentalPrice) || 0,
-            publishedYear: new Date().getFullYear(), // Default or add column
+            rentalPrice: Number(RentalPrice) || 1.99, // Default price
+            publishedYear: new Date().getFullYear(),
             copies: 0,
           }
         });

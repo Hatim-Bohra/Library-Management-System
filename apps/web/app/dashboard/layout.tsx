@@ -51,7 +51,7 @@ export default function DashboardLayout({
 
     return (
         <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
-            <div className="hidden border-r bg-muted/40 lg:block">
+            <div className="hidden border-r bg-muted/40 lg:block sticky top-0 h-screen">
                 <div className="flex h-full max-h-screen flex-col gap-2">
                     <div className="flex h-14 items-center border-b px-6">
                         <Link className="flex items-center gap-2 font-semibold" href="/">

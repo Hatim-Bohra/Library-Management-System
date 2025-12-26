@@ -33,7 +33,7 @@ export default function BooksPage() {
     const { data: books, isLoading, error } = useQuery({
         queryKey: ['books', debouncedSearch, selectedCategory],
         queryFn: async () => {
-            const params: any = {};
+            const params: any = { limit: 50 };
             if (debouncedSearch) params.q = debouncedSearch;
             if (selectedCategory && selectedCategory !== 'all') params.categoryId = selectedCategory;
 
@@ -43,18 +43,18 @@ export default function BooksPage() {
     });
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <h2 className="text-3xl font-bold tracking-tight">Library Catalog</h2>
+                <h2 className="text-2xl font-bold tracking-tight">Library Catalog</h2>
 
-                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
                     {/* Filter */}
-                    <div className="w-full md:w-[200px]">
+                    <div className="w-full md:w-[150px]">
                         <Select onValueChange={setSelectedCategory} defaultValue="all">
-                            <SelectTrigger>
+                            <SelectTrigger className="h-8 text-xs">
                                 <SelectValue placeholder="All Genres" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="max-h-[300px]">
                                 <SelectItem value="all">All Genres</SelectItem>
                                 {categories?.map((cat: any) => (
                                     <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
@@ -64,13 +64,14 @@ export default function BooksPage() {
                     </div>
 
                     {/* Search */}
-                    <div className="flex w-full md:w-[300px] items-center space-x-2">
+                    <div className="flex w-full md:w-[250px] items-center space-x-2">
                         <Input
-                            placeholder="Search books..."
+                            placeholder="Search..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
+                            className="h-8 text-xs"
                         />
-                        <Button size="icon"><Search className="h-4 w-4" /></Button>
+                        <Button size="icon" className="h-8 w-8"><Search className="h-3 w-3" /></Button>
                     </div>
                 </div>
             </div>
@@ -81,9 +82,9 @@ export default function BooksPage() {
                 <div>Error loading books: {(error as any).message}</div>
             ) : (
                 <>
-                    <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                    <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8">
                         {books?.map((book: any) => (
-                            <div key={book.id} className="h-[320px]">
+                            <div key={book.id} className="h-[280px]">
                                 <BookCard book={book} />
                             </div>
                         ))}

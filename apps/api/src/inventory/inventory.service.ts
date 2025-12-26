@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { AddInventoryDto, UpdateInventoryStatusDto } from './dto';
@@ -9,6 +10,8 @@ import { InventoryAction, ItemStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class InventoryService {
+  private readonly logger = new Logger(InventoryService.name);
+
   constructor(private prisma: PrismaService) { }
 
   async addCopy(bookId: string, dto: AddInventoryDto, userId: string) {
@@ -46,6 +49,7 @@ export class InventoryService {
         },
       });
 
+      this.logger.log(`Added inventory item ${item.barcode} for book ${bookId}`);
       return item;
     });
   }
@@ -82,6 +86,7 @@ export class InventoryService {
       // If LOST, maybe we should decrement?
       // For now, let's leave 'copies' as total inventory record count.
 
+      this.logger.log(`Updated inventory item ${id} status to ${dto.status}`);
       return updated;
     });
   }

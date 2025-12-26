@@ -12,6 +12,8 @@ model User {
   id            String         @id @default(uuid())
   email         String         @unique
   password      String
+  resetToken    String?
+  resetTokenExpiry DateTime?
   role          Role           @default(MEMBER)
   firstName     String
   lastName      String
@@ -51,6 +53,7 @@ model SystemPolicy {
   maxConcurrentSessions Int      @default(3)
   sessionTimeoutMinutes Int      @default(1440) // 24 hours
   refreshTokenTtlDays   Int      @default(7)
+  defaultLoanDurationDays Int    @default(14)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 }

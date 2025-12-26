@@ -20,7 +20,7 @@ import { CreateBookDto, UpdateBookDto } from './dto';
 import { GetCurrentUserId, Public, Roles } from '../auth/decorators';
 import { Role } from '@prisma/client';
 import { RolesGuard } from '../auth/guards'; // Ensure this is exported or imported correctly
-import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiOkResponse, ApiCreatedResponse } from '@nestjs/swagger';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto'; // Added PaginationQueryDto
 import { GetBooksQueryDto } from './dto/get-books-query.dto';
 
@@ -33,6 +33,7 @@ export class BooksController {
   @ApiBearerAuth()
   @Post()
   @ApiOperation({ summary: 'Create a new book (Admin/Librarian)' })
+  @ApiCreatedResponse({ description: 'The book has been successfully created.' })
   create(@Body() createBookDto: CreateBookDto, @GetCurrentUserId() userId: string) {
     return this.booksService.create(createBookDto, userId);
   }
@@ -42,6 +43,7 @@ export class BooksController {
   @Post('import')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Import books from CSV' })
+  @ApiCreatedResponse({ description: 'Books imported successfully.' })
   importBooks(@UploadedFile() file: Express.Multer.File, @GetCurrentUserId() userId: string) {
     return this.booksService.importBooks(file, userId);
   }
@@ -51,6 +53,7 @@ export class BooksController {
   @UseInterceptors(CacheInterceptor) // Applied CacheInterceptor
   @CacheTTL(60000) // Applied CacheTTL
   @ApiOperation({ summary: 'List all books' })
+  @ApiOkResponse({ description: 'List of books retrieved successfully.' })
   findAll(@Query() query: GetBooksQueryDto) {
     return this.booksService.findAll(query); // Updated service call
   }
