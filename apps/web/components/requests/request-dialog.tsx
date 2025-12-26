@@ -56,9 +56,21 @@ interface RequestDialogProps {
     trigger?: React.ReactNode;
 }
 
-export function RequestDialog({ bookId, bookTitle, rentalPrice, trigger }: RequestDialogProps) {
+export function RequestDialog({ bookId, bookTitle, rentalPrice = 0, trigger }: RequestDialogProps) {
     const [open, setOpen] = useState(false);
     const queryClient = useQueryClient();
+    const [depositAmount, setDepositAmount] = useState<number>(10);
+
+    // Fetch user wallet balance
+    const { data: wallet, isLoading: isWalletLoading, refetch: refetchWallet } = useQuery({
+        queryKey: ['wallet-balance'],
+        queryFn: async () => {
+            const { data } = await api.get('/wallet/balance');
+            return data;
+        },
+        enabled: open, // Only fetch when dialog opens
+    });
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -68,7 +80,7 @@ export function RequestDialog({ bookId, bookTitle, rentalPrice, trigger }: Reque
         },
     });
 
-    const mutation = useMutation({
+    const requestMutation = useMutation({
         mutationFn: async (values: z.infer<typeof formSchema>) => {
             const { data } = await api.post('/requests', {
                 bookId,
@@ -84,17 +96,35 @@ export function RequestDialog({ bookId, bookTitle, rentalPrice, trigger }: Reque
             toast.success('Request placed successfully!');
             queryClient.invalidateQueries({ queryKey: ['requests'] });
             queryClient.invalidateQueries({ queryKey: ['books'] });
+            refetchWallet(); // Update balance
         },
         onError: (error: any) => {
             toast.error(error?.response?.data?.message || 'Failed to place request');
         }
     });
 
+    const depositMutation = useMutation({
+        mutationFn: async (amount: number) => {
+            const { data } = await api.post('/wallet/deposit', { amount });
+            return data;
+        },
+        onSuccess: () => {
+            toast.success('Funds added successfully!');
+            refetchWallet(); // Update balance to unblock UI
+        },
+        onError: (error: any) => {
+            toast.error('Failed to add funds.');
+        }
+    });
+
     function onSubmit(values: z.infer<typeof formSchema>) {
-        mutation.mutate(values);
+        requestMutation.mutate(values);
     }
 
     const type = form.watch('type');
+    const currentBalance = Number(wallet?.balance || 0);
+    const hasInsufficientFunds = rentalPrice > 0 && currentBalance < rentalPrice;
+    const fundsNeeded = rentalPrice - currentBalance;
 
     // Date limits
     const tomorrow = new Date();
@@ -114,84 +144,128 @@ export function RequestDialog({ bookId, bookTitle, rentalPrice, trigger }: Reque
                 <DialogHeader>
                     <DialogTitle>Request Book</DialogTitle>
                     <DialogDescription>
-                        Requesting &quot;{bookTitle}&quot;. Choose your fulfillment method.
-                        {((rentalPrice || 0) > 0) && (
-                            <div className="mt-2 p-2 bg-yellow-100 text-yellow-800 rounded-md text-sm font-medium">
-                                Note: This book has a rental fee of ${Number(rentalPrice).toFixed(2)}.
-                                Payment will be deducted from your wallet upon fulfillment.
-                            </div>
-                        )}
+                        Requesting &quot;{bookTitle}&quot;.
                     </DialogDescription>
                 </DialogHeader>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="type"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Type</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select type" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="PICKUP">Pickup (Library)</SelectItem>
-                                            <SelectItem value="DELIVERY">Delivery (Home)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
 
-                        {type === 'DELIVERY' && (
+                {isWalletLoading ? (
+                    <div className="py-8 text-center text-muted-foreground animate-pulse">Checking wallet...</div>
+                ) : hasInsufficientFunds ? (
+                    /* 🚨 INSUFFICIENT FUNDS VIEW */
+                    <div className="space-y-4 py-2">
+                        <div className="rounded-lg bg-red-50 p-4 border border-red-100 flex flex-col gap-2">
+                            <div className="flex justify-between items-center text-red-800">
+                                <span className="font-medium">Insufficient Wallet Balance</span>
+                                <span className="text-xs font-bold bg-red-200 px-2 py-1 rounded-full">Missing ${(fundsNeeded).toFixed(2)}</span>
+                            </div>
+                            <div className="text-sm text-red-600">
+                                Current Balance: <span className="font-mono font-bold">${currentBalance.toFixed(2)}</span><br />
+                                Required: <span className="font-mono font-bold">${Number(rentalPrice).toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <p className="text-sm font-medium text-center">Add funds to continue</p>
+                            <div className="grid grid-cols-3 gap-2">
+                                {[5, 10, 20].map((amt) => (
+                                    <Button
+                                        key={amt}
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setDepositAmount(amt)}
+                                        className={depositAmount === amt ? "border-primary bg-primary/10" : ""}
+                                    >
+                                        ${amt}
+                                    </Button>
+                                ))}
+                            </div>
+                            <Button
+                                className="w-full"
+                                onClick={() => depositMutation.mutate(depositAmount)}
+                                disabled={depositMutation.isPending}
+                            >
+                                {depositMutation.isPending ? 'Processing...' : `Add $${depositAmount} & Continue`}
+                            </Button>
+                        </div>
+                    </div>
+                ) : (
+                    /* ✅ STANDARD CHECKOUT VIEW */
+                    <Form {...form}>
+                        {rentalPrice > 0 && (
+                            <div className="p-3 bg-green-50 text-green-800 rounded-md text-sm flex justify-between items-center">
+                                <span>Wallet Balance: <strong>${currentBalance.toFixed(2)}</strong></span>
+                                <span className="text-xs bg-green-200 px-2 py-0.5 rounded">OK</span>
+                            </div>
+                        )}
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
                             <FormField
                                 control={form.control}
-                                name="address"
+                                name="type"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Delivery Address</FormLabel>
-                                        <FormControl>
-                                            <Textarea placeholder="Enter your full address..." {...field} />
-                                        </FormControl>
+                                        <FormLabel>Type</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select type" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="PICKUP">Pickup (Library)</SelectItem>
+                                                <SelectItem value="DELIVERY">Delivery ({rentalPrice > 0 ? '+ Shipping' : 'Free'})</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
-                        )}
 
-                        <FormField
-                            control={form.control}
-                            name="returnDate"
-                            render={({ field }) => (
-                                <FormItem className="space-y-2">
-                                    <FormLabel>Expected Return Date (Optional)</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="date"
-                                            min={minStr}
-                                            max={maxStr}
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <p className="text-xs text-muted-foreground">
-                                        Max duration: 14 days from today
-                                    </p>
-                                    <FormMessage />
-                                </FormItem>
+                            {type === 'DELIVERY' && (
+                                <FormField
+                                    control={form.control}
+                                    name="address"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Delivery Address</FormLabel>
+                                            <FormControl>
+                                                <Textarea placeholder="Enter your full address..." {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             )}
-                        />
 
-                        <DialogFooter>
-                            <Button type="submit" disabled={mutation.isPending}>
-                                {mutation.isPending ? 'Submitting...' : 'Submit Request'}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </Form>
+                            <FormField
+                                control={form.control}
+                                name="returnDate"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-2">
+                                        <FormLabel>Expected Return Date (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="date"
+                                                min={minStr}
+                                                max={maxStr}
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <p className="text-xs text-muted-foreground">
+                                            Max duration: 14 days from today
+                                        </p>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <DialogFooter>
+                                <Button type="submit" disabled={requestMutation.isPending}>
+                                    {requestMutation.isPending ? 'Confirming...' : (rentalPrice > 0 ? `Pay $${rentalPrice} & Rent` : 'Confirm Rental')}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
+                )}
             </DialogContent>
         </Dialog>
     );

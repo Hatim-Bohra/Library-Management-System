@@ -12,7 +12,7 @@ export function PublicNav() {
                     <Link href="/" className="mr-6 flex items-center space-x-2">
                         <Book className="h-6 w-6" />
                         <span className="hidden font-bold sm:inline-block">
-                            Acmei Library
+                            Lumina Library
                         </span>
                     </Link>
                     <nav className="flex items-center space-x-6 text-sm font-medium">
