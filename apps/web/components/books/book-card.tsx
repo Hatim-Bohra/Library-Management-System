@@ -1,6 +1,7 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
 import { RequestDialog } from '@/components/requests/request-dialog';
 
 interface Book {
@@ -11,6 +12,7 @@ interface Book {
     copies: number;
     inventoryItems?: any[];
     coverUrl?: string;
+    rentalPrice?: number | string;
 }
 
 interface BookCardProps {
@@ -24,10 +26,12 @@ export function BookCard({ book }: BookCardProps) {
         <Card className="flex flex-col h-full overflow-hidden group">
             <div className="aspect-[2/3] w-full bg-muted relative overflow-hidden">
                 {book.coverUrl ? (
-                    <img
-                        src={book.coverUrl.startsWith('http') ? book.coverUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${book.coverUrl}`}
+                    <Image
+                        src={book.coverUrl.startsWith('http') ? book.coverUrl : book.coverUrl}
                         alt={book.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-muted/50">
@@ -41,9 +45,16 @@ export function BookCard({ book }: BookCardProps) {
                         <CardTitle className="line-clamp-2">{book.title}</CardTitle>
                         <CardDescription>{book.author.name}</CardDescription>
                     </div>
-                    <Badge variant={book.isAvailable ? 'default' : 'secondary'}>
-                        {availableCount > 0 ? 'Available' : 'Out of Stock'}
-                    </Badge>
+                    <div className="flex flex-col gap-2 items-end">
+                        <Badge variant={book.isAvailable ? 'default' : 'secondary'}>
+                            {availableCount > 0 ? 'Available' : 'Out of Stock'}
+                        </Badge>
+                        {Number(book.rentalPrice) > 0 && (
+                            <Badge variant="outline" className="text-green-600 border-green-600">
+                                Rent: ${Number(book.rentalPrice).toFixed(2)}
+                            </Badge>
+                        )}
+                    </div>
                 </div>
             </CardHeader>
             <CardContent className="flex-1">
@@ -55,6 +66,7 @@ export function BookCard({ book }: BookCardProps) {
                 <RequestDialog
                     bookId={book.id}
                     bookTitle={book.title}
+                    rentalPrice={Number(book.rentalPrice || 0)}
                     trigger={<Button className="w-full" disabled={!book.isAvailable}>Request</Button>}
                 />
             </CardFooter>

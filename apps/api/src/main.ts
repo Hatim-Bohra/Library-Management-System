@@ -1,3 +1,10 @@
+import * as crypto from 'crypto';
+
+if (!global.crypto) {
+
+  (global as any).crypto = crypto;
+}
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -37,7 +44,7 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   const port = 3002;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   console.log(`Application is running on: ${await app.getUrl()}`);
 }
 void bootstrap();

@@ -9,6 +9,8 @@ export interface Book {
     authorName: string;
     categoryId: string;
     coverUrl?: string;
+    price?: number;
+    rentalPrice?: number;
 }
 
 export const getBooks = async (): Promise<Book[]> => {

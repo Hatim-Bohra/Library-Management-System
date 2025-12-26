@@ -113,7 +113,7 @@ export class NotificationsService {
         }
     }
 
-    async findAll(userId: string) {
+    findAll(userId: string) {
         return this.prisma.notification.findMany({
             where: { userId },
             orderBy: { createdAt: 'desc' },
@@ -121,13 +121,13 @@ export class NotificationsService {
         });
     }
 
-    async getUnreadCount(userId: string) {
+    getUnreadCount(userId: string) {
         return this.prisma.notification.count({
             where: { userId, read: false },
         });
     }
 
-    async markAsRead(id: string, userId: string) {
+    markAsRead(id: string, userId: string) {
         return this.prisma.notification.update({
             where: { id, userId }, // Ensure user owns it
             data: { read: true },

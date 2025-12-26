@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Pencil, Loader2, Image as ImageIcon } from 'lucide-react';
+import Image from 'next/image';
 import { toast } from 'sonner';
 
 import api from '@/lib/api';
@@ -52,6 +53,7 @@ const formSchema = z.object({
     coverUrl: z.string().optional(),
     coverImageSize: z.number().optional(),
     coverImageMime: z.string().optional(),
+    rentalPrice: z.coerce.number().min(0, 'Cannot be negative').optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -76,6 +78,7 @@ export function BookDialog({ initialData }: BookDialogProps) {
             copies: 1,
             description: '',
             coverUrl: '',
+            rentalPrice: 0,
         },
     });
 
@@ -93,6 +96,7 @@ export function BookDialog({ initialData }: BookDialogProps) {
                     copies: initialData.copies,
                     description: '',
                     coverUrl: initialData.coverUrl || '',
+                    rentalPrice: Number(initialData.rentalPrice || 0),
                 });
             } else {
                 form.reset({
@@ -104,6 +108,7 @@ export function BookDialog({ initialData }: BookDialogProps) {
                     copies: 1,
                     description: '',
                     coverUrl: '',
+                    rentalPrice: 0,
                 });
             }
         }
@@ -200,10 +205,12 @@ export function BookDialog({ initialData }: BookDialogProps) {
                                         // The backend returns `/uploads/covers/...` relative URL.
                                         // Next.js Image component needs absolute or configured domain.
                                         // Using standard img for now.
-                                        <img
-                                            src={(coverUrl || '').startsWith('http') ? coverUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${coverUrl}`}
+                                        <Image
+                                            src={(coverUrl || '').startsWith('http') ? coverUrl : coverUrl}
                                             alt="Cover"
-                                            className="w-full h-full object-cover"
+                                            fill
+                                            className="object-cover"
+                                            sizes="(max-width: 768px) 100vw, 33vw"
                                         />
                                     ) : (
                                         <ImageIcon className="h-10 w-10 text-muted-foreground" />
@@ -316,6 +323,19 @@ export function BookDialog({ initialData }: BookDialogProps) {
                                     <FormLabel>Total Copies</FormLabel>
                                     <FormControl>
                                         <Input type="number" placeholder="5" {...field} disabled={!!initialData} title={initialData ? "Manage copies in Inventory" : ""} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="rentalPrice"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Rental Price ($)</FormLabel>
+                                    <FormControl>
+                                        <Input type="number" step="0.01" placeholder="0.00" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

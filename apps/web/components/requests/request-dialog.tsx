@@ -52,10 +52,11 @@ const formSchema = z.object({
 interface RequestDialogProps {
     bookId: string;
     bookTitle: string;
+    rentalPrice?: number;
     trigger?: React.ReactNode;
 }
 
-export function RequestDialog({ bookId, bookTitle, trigger }: RequestDialogProps) {
+export function RequestDialog({ bookId, bookTitle, rentalPrice, trigger }: RequestDialogProps) {
     const [open, setOpen] = useState(false);
     const queryClient = useQueryClient();
     const form = useForm<z.infer<typeof formSchema>>({
@@ -114,6 +115,12 @@ export function RequestDialog({ bookId, bookTitle, trigger }: RequestDialogProps
                     <DialogTitle>Request Book</DialogTitle>
                     <DialogDescription>
                         Requesting &quot;{bookTitle}&quot;. Choose your fulfillment method.
+                        {((rentalPrice || 0) > 0) && (
+                            <div className="mt-2 p-2 bg-yellow-100 text-yellow-800 rounded-md text-sm font-medium">
+                                Note: This book has a rental fee of ${Number(rentalPrice).toFixed(2)}.
+                                Payment will be deducted from your wallet upon fulfillment.
+                            </div>
+                        )}
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>

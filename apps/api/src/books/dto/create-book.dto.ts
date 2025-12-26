@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString, Min, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateBookDto {
@@ -46,6 +46,18 @@ export class CreateBookDto {
   @IsInt()
   @IsOptional()
   coverImageSize?: number;
+
+  @ApiProperty({ required: false, default: 0 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  price?: number;
+
+  @ApiProperty({ required: false, default: 0 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  rentalPrice?: number;
 
   @ApiProperty({ required: false })
   @IsString()

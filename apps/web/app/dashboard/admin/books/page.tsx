@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import Image from 'next/image';
 
 import { BookDialog } from '@/components/books/book-dialog';
 import { InventoryDialog } from '@/components/books/inventory-dialog';
@@ -52,11 +53,15 @@ export default function AdminBooksPage() {
                             <TableRow key={book.id}>
                                 <TableCell>
                                     {book.coverUrl ? (
-                                        <img
-                                            src={book.coverUrl.startsWith('http') ? book.coverUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${book.coverUrl}`}
-                                            alt="Cover"
-                                            className="h-10 w-8 object-cover rounded shadow-sm"
-                                        />
+                                        <div className="relative h-10 w-8">
+                                            <Image
+                                                src={book.coverUrl.startsWith('http') ? book.coverUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${book.coverUrl}`}
+                                                alt="Cover"
+                                                fill
+                                                className="object-cover rounded shadow-sm"
+                                                sizes="32px"
+                                            />
+                                        </div>
                                     ) : (
                                         <div className="h-10 w-8 bg-muted rounded flex items-center justify-center text-[8px] text-muted-foreground">
                                             No
@@ -77,6 +82,6 @@ export default function AdminBooksPage() {
                     </TableBody>
                 </Table>
             </div>
-        </div>
+        </div >
     );
 }

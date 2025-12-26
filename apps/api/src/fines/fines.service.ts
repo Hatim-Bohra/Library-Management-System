@@ -104,7 +104,7 @@ export class FinesService implements OnModuleInit {
     return Number(bookPrice) + Number(processingFee);
   }
 
-  async getUserFines(userId: string) {
+  getUserFines(userId: string) {
     return this.prisma.fine.findMany({
       where: {
         loan: {

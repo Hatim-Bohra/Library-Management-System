@@ -17,14 +17,16 @@ model User {
   lastName      String
   fines         Fine[]
   notifications Notification[]
+  
+  walletBalance Decimal       @default(0.0)
+  transactions  Transaction[]
+
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  hashedRefreshToken String? @ignore // Deprecated, will be removed in next migration or just ignore for now to avoid data loss if we want to be safe, but plan says remove. Let's comment it out or remove. Plan said "Remove".
-  // hashedRefreshToken String? 
+  // hashedRefreshToken String? // Removed
   
-  sessions              Session[] // Relation to Session model
-
+  sessions              Session[]
   loans                 Loan[]
   reservations          Reservation[]
   auditLogs             AuditLog[]
@@ -53,6 +55,28 @@ model SystemPolicy {
   updatedAt             DateTime @updatedAt
 }
 
+model Transaction {
+  id        String            @id @default(uuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id])
+  amount    Decimal
+  type      TransactionType
+  status    TransactionStatus @default(COMPLETED)
+  createdAt DateTime          @default(now())
+}
+
+enum TransactionType {
+  DEPOSIT
+  RENTAL
+  FINE_PAYMENT
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
 enum Role {
   ADMIN
   LIBRARIAN
@@ -67,7 +91,8 @@ model Book {
   copies        Int     @default(1)
   isAvailable   Boolean @default(true)
   description   String?
-  price         Decimal @default(0.0)
+  price         Decimal @default(0.0) // Replacement cost
+  rentalPrice   Decimal @default(0.0) // Cost to borrow
   coverUrl      String?
   coverImageSize Int?
   coverImageMime String?
@@ -81,8 +106,7 @@ model Book {
   inventoryItems InventoryItem[]
   loans          Loan[]
   reservations   Reservation[]
-
-  bookRequests BookRequest[]
+  bookRequests   BookRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

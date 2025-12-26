@@ -3,6 +3,7 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 
 interface BookCardProps {
@@ -17,10 +18,12 @@ export function BookCard({ book }: BookCardProps) {
             <div className="aspect-[2/3] w-full bg-secondary/30 relative flex items-center justify-center overflow-hidden">
                 {/* Placeholder for now. Ideally <Image /> */}
                 {book.coverUrl ? (
-                    <img
+                    <Image
                         src={(book.coverUrl || '').startsWith('http') ? book.coverUrl : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${book.coverUrl}`}
                         alt={book.title}
-                        className="w-full h-full object-cover transition-transform hover:scale-105"
+                        fill
+                        className="object-cover transition-transform hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                 ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">

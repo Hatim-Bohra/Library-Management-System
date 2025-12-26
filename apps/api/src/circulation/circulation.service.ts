@@ -11,22 +11,46 @@ export class CirculationService {
   async checkOut(createLoanDto: CreateLoanDto) {
     const { userId, bookId } = createLoanDto;
 
-    // Check copies available
-    const book = await this.prisma.book.findUniqueOrThrow({
-      where: { id: bookId },
-    });
-    if (book.copies < 1) {
-      throw new BadRequestException('Book not available');
-    }
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Get Book and User
+      const book = await tx.book.findUniqueOrThrow({ where: { id: bookId } });
+      const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
 
-    // Create loan
-    // In real app: use transaction to decrement copies
-    return this.prisma.loan.create({
-      data: {
-        userId,
-        bookId,
-        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
-      },
+      if (book.copies < 1) {
+        throw new BadRequestException('Book not available');
+      }
+
+      // 2. Check Funds
+      const rentalPrice = Number(book.rentalPrice);
+      if (rentalPrice > 0) {
+        if (Number(user.walletBalance) < rentalPrice) {
+          throw new BadRequestException('Insufficient funds in wallet');
+        }
+
+        // 3. Deduct Funds & Create Transaction
+        await tx.user.update({
+          where: { id: userId },
+          data: { walletBalance: { decrement: rentalPrice } }
+        });
+
+        await tx.transaction.create({
+          data: {
+            userId,
+            amount: -rentalPrice,
+            type: 'RENTAL',
+            status: 'COMPLETED'
+          }
+        });
+      }
+
+      // 4. Create Loan
+      return tx.loan.create({
+        data: {
+          userId,
+          bookId,
+          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
+        },
+      });
     });
   }
 

@@ -53,6 +53,8 @@ export class BooksService {
         coverImageMime: bookData.coverImageMime,
         categoryId: dto.categoryId,
         authorId: author.id,
+        price: bookData.price || 0,
+        rentalPrice: bookData.rentalPrice || 0,
         copies: 0, // Will be updated by inventory
       };
 
