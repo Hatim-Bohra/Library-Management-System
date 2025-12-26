@@ -23,7 +23,7 @@ export class BooksService {
       columns: true,
       skip_empty_lines: true,
       trim: true,
-    }) as any[]; // Cast to any[] or specific interface to avoid unknown error
+    }); // Cast to any[] or specific interface to avoid unknown error
 
     const results = {
       success: 0,

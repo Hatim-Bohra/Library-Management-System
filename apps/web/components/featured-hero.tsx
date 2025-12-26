@@ -18,7 +18,7 @@ export function FeaturedHero() {
                             The Great Gatsby
                         </h1>
                         <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                            Dive into the Roaring Twenties with F. Scott Fitzgerald's masterpiece.
+                            Dive into the Roaring Twenties with F. Scott Fitzgerald&apos;s masterpiece.
                             A story of ambition, love, and the American Dream that resonates to this day.
                         </p>
                         <div className="flex flex-col gap-2 min-[400px]:flex-row">

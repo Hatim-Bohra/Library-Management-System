@@ -3,6 +3,7 @@ import { RequestsService } from './requests.service';
 import { BooksService } from '../books/books.service';
 import { PrismaService } from '../database/prisma.service';
 import { FinesService } from '../fines/fines.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   BookRequestStatus,
   BookRequestType,
@@ -67,6 +68,13 @@ describe('RequestsService', () => {
           provide: BooksService,
           useValue: mockBooksService,
         },
+        {
+          provide: NotificationsService,
+          useValue: {
+            createNotification: jest.fn(),
+            notifyRoles: jest.fn(),
+          }
+        }
       ],
     }).compile();
 
