@@ -7,11 +7,14 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Check, X } from 'lucide-react';
 import Link from 'next/link';
 import { PublicNav } from '@/components/public-nav';
+import { useAuth } from '@/components/providers/auth-provider';
+import { RequestDialog } from '@/components/requests/request-dialog';
 import { useParams } from 'next/navigation';
 
 export default function BookDetailsPage() {
     const params = useParams();
     const id = params.id as string;
+    const { isAuthenticated } = useAuth();
 
     const { data: book, isLoading } = useQuery({
         queryKey: ['book', id],
@@ -117,11 +120,20 @@ export default function BookDetailsPage() {
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                            <Button size="lg" className="w-full sm:w-auto px-8" asChild disabled={!book.isAvailable}>
-                                <Link href={book.isAvailable ? `/login?redirect=/books/${id}&action=rent` : '#'}>
-                                    {book.isAvailable ? 'Rent This Book' : 'Join Waitlist'}
-                                </Link>
-                            </Button>
+                            {isAuthenticated && book.isAvailable ? (
+                                <RequestDialog
+                                    bookId={book.id}
+                                    bookTitle={book.title}
+                                    rentalPrice={Number(book.rentalPrice || 0)}
+                                    trigger={<Button size="lg" className="w-full sm:w-auto px-8">Rent This Book</Button>}
+                                />
+                            ) : (
+                                <Button size="lg" className="w-full sm:w-auto px-8" asChild disabled={!book.isAvailable}>
+                                    <Link href={book.isAvailable ? `/login?redirect=/books/${id}` : '#'}>
+                                        {book.isAvailable ? 'Login to Rent' : 'Join Waitlist'}
+                                    </Link>
+                                </Button>
+                            )}
                             <Button size="lg" variant="outline" className="w-full sm:w-auto">
                                 Add to Wishlist
                             </Button>
