@@ -20,7 +20,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Suspense, useState, useEffect } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
 
 const formSchema = z.object({
     password: z.string().min(6, "Password must be at least 6 characters"),
@@ -35,7 +34,6 @@ function ResetPasswordForm() {
     const searchParams = useSearchParams();
     const token = searchParams.get('token');
     const [success, setSuccess] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -116,16 +114,7 @@ function ResetPasswordForm() {
                                 <FormItem>
                                     <FormLabel>New Password</FormLabel>
                                     <FormControl>
-                                        <div className="relative">
-                                            <Input type={showPassword ? "text" : "password"} {...field} className="pr-10" />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 cursor-pointer"
-                                            >
-                                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                            </button>
-                                        </div>
+                                        <Input type="password" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -138,7 +127,7 @@ function ResetPasswordForm() {
                                 <FormItem>
                                     <FormLabel>Confirm Password</FormLabel>
                                     <FormControl>
-                                        <Input type={showPassword ? "text" : "password"} {...field} />
+                                        <Input type="password" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

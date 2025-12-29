@@ -29,14 +29,12 @@ import { useAuth } from '@/components/providers/auth-provider';
 
 import { useSearchParams } from 'next/navigation';
 
-import { Suspense, useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Suspense } from 'react';
 
 function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirectUrl = searchParams.get('redirect') || searchParams.get('returnUrl');
-    const [showPassword, setShowPassword] = useState(false);
 
     const { login: authLogin } = useAuth();
     const form = useForm<z.infer<typeof formSchema>>({
@@ -93,16 +91,7 @@ function LoginForm() {
                                 <FormItem>
                                     <FormLabel>Password</FormLabel>
                                     <FormControl>
-                                        <div className="relative">
-                                            <Input type={showPassword ? "text" : "password"} {...field} className="pr-10" />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 cursor-pointer"
-                                            >
-                                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                            </button>
-                                        </div>
+                                        <Input type="password" {...field} />
                                     </FormControl>
                                     <div className="flex justify-end">
                                         <Link href="/forgot-password" className="text-xs text-blue-600 hover:underline">
