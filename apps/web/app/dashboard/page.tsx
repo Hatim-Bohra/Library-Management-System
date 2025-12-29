@@ -18,7 +18,10 @@ const iconMap: any = {
 };
 
 import { useAuth } from "@/components/providers/auth-provider";
-import { BookCard } from "@/components/books/book-card";
+import { BookCard } from "@/components/book-card";
+import { BookCarousel } from "@/components/book-carousel";
+import { FeaturedHero } from '@/components/featured-hero';
+import { CategoryPills } from '@/components/category-pills';
 import { InventoryStatsCards } from "@/components/inventory/inventory-stats-cards";
 
 import { useState, useEffect } from 'react';
@@ -84,13 +87,38 @@ export default function DashboardPage() {
         );
     }
 
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return "Good Morning";
+        if (hour < 18) return "Good Afternoon";
+        return "Good Evening";
+    };
+
     return (
         <div className="space-y-8">
+            {/* Header / Greeting */}
+            <div className="flex flex-col gap-2">
+                <h1 className="text-3xl font-bold tracking-tight">
+                    {getGreeting()}, {user?.name?.split(' ')[0] || 'Member'}.
+                </h1>
+                <p className="text-muted-foreground">
+                    Here is what&apos;s happening in your library today.
+                </p>
+            </div>
+
             {/* Inventory Stats (Admin/Librarian) */}
             {(user?.role === 'ADMIN' || user?.role === 'LIBRARIAN') && (
                 <div className="space-y-4">
                     <h2 className="text-xl font-semibold tracking-tight">Inventory Overview</h2>
                     <InventoryStatsCards />
+                </div>
+            )}
+
+            {/* Business Critical: Loans & Fines (Members) */}
+            {user?.role === 'MEMBER' && (
+                <div className="grid gap-6 lg:grid-cols-2">
+                    <ActiveLoans />
+                    <FineBreakdown />
                 </div>
             )}
 
@@ -100,18 +128,15 @@ export default function DashboardPage() {
                     const Icon = iconMap[stat.icon] || Book;
                     return (
                         <Link href={stat.link} key={index}>
-                            <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+                            <Card className="hover:bg-muted/50 transition-colors cursor-pointer border-none shadow-md bg-gradient-to-br from-background to-muted/20">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">
+                                    <CardTitle className="text-sm font-medium text-muted-foreground">
                                         {stat.title}
                                     </CardTitle>
                                     <Icon className={`h-4 w-4 ${stat.color}`} />
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-2xl font-bold">{stat.value}</div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Click to view details
-                                    </p>
                                 </CardContent>
                             </Card>
                         </Link>
@@ -119,51 +144,61 @@ export default function DashboardPage() {
                 })}
             </div>
 
+            {/* Featured & Engagement */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Trending Carousel */}
+                    {books && books.length > 0 && (
+                        <div>
+                            <h2 className="text-xl font-semibold mb-4 tracking-tight">Trending Now</h2>
+                            <BookCarousel title="" books={books.slice(0, 8)} />
+                        </div>
+                    )}
+                </div>
+
+                {/* Compact Featured Book / Recommendation */}
+                <div className="lg:col-span-1">
+                    <FeaturedHero variant="compact" book={books?.[1]} />
+                </div>
+            </div>
+
             {/* Book Catalog Section (Members Only) */}
             {user?.role === 'MEMBER' && (
-                <div className="space-y-6">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                        <h2 className="text-3xl font-bold tracking-tight">Library Catalog</h2>
-                        {/* ... existing catalog header ... */}
-                        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-                            {/* Filter */}
-                            <div className="w-full md:w-[200px]">
-                                <Select onValueChange={setSelectedCategory} defaultValue="all">
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="All Genres" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Genres</SelectItem>
-                                        {categories?.map((cat: any) => (
-                                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                <div className="space-y-6 pt-6 border-t">
+                    <div className="flex flex-col gap-6">
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                            <h2 className="text-2xl font-bold tracking-tight">Browse Collection</h2>
 
                             {/* Search */}
                             <div className="flex w-full md:w-[300px] items-center space-x-2">
                                 <Input
                                     type="search"
-                                    placeholder="Search..."
+                                    placeholder="Search title, author, isbn..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
+                                    className="bg-background"
                                 />
-                                <Button size="icon"><Search className="h-4 w-4" /></Button>
+                                <Button size="icon" variant="ghost"><Search className="h-4 w-4" /></Button>
                             </div>
                         </div>
-                    </div>
 
-                    <FineBreakdown />
-                    <ActiveLoans />
+                        {/* Category Pills */}
+                        <div className="w-full">
+                            <CategoryPills
+                                categories={categories || []}
+                                selectedId={selectedCategory}
+                                onSelect={setSelectedCategory}
+                            />
+                        </div>
+                    </div>
 
                     {booksLoading ? (
                         <div>Loading Catalog...</div>
                     ) : (
                         <>
-                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                            <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4">
                                 {books?.map((book: any) => (
-                                    <BookCard key={book.id} book={book} />
+                                    <BookCard key={book.id} book={book} hideGenre={true} />
                                 ))}
                             </div>
                             {books?.length === 0 && <p>No books found matching your criteria.</p>}

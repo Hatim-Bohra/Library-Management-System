@@ -35,10 +35,13 @@
     "@nestjs/throttler": "^6.5.0",
     "@react-email/render": "^2.0.0",
     "@repo/database": "*",
+    "@repo/email": "*",
     "@types/csv-parse": "^1.1.12",
     "@types/nodemailer": "^7.0.4",
+    "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "cache-manager": "^7.2.7",
+    "cheerio": "^1.1.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "csv-parse": "^6.1.0",
@@ -48,7 +51,8 @@
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -62,6 +66,7 @@
     "@types/multer": "^2.0.0",
     "@types/node": "^22.10.7",
     "@types/supertest": "^6.0.2",
+    "@types/uuid": "^10.0.0",
     "eslint": "^9.18.0",
     "globals": "^16.0.0",
     "jest": "^30.0.0",

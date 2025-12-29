@@ -30,7 +30,7 @@ import { AppService } from './app.service';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', '..', '..', 'uploads'), // Go up from dist/apps/api/src
+      rootPath: join(process.cwd(), 'apps', 'api', 'uploads'),
       serveRoot: '/uploads',
     }),
     ScheduleModule.forRoot(),

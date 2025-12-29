@@ -74,10 +74,12 @@ export default function Home() {
       <PublicNav />
 
       {/* 1. Feature Hero - Spotlight */}
-      <FeaturedHero />
+      <div className="container mx-auto px-4 md:px-6 py-6 space-y-8">
+        <FeaturedHero book={trendingBooks?.[0]} />
 
-      {/* 2. Trending Carousel - Social Proof */}
-      <BookCarousel title="Trending Now" books={trendingBooks} loading={booksLoading} />
+        {/* 2. Trending Carousel - Social Proof */}
+        <BookCarousel title="Trending Now" books={trendingBooks} loading={booksLoading} />
+      </div>
 
       {/* 3. Main Catalog Section */}
       <section id="catalog" className="w-full py-12 bg-muted/30">

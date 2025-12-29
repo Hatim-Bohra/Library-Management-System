@@ -5,8 +5,9 @@ import { Book } from '@prisma/client';
 import { GetBooksQueryDto } from './dto/get-books-query.dto';
 
 import { InventoryService } from '../inventory/inventory.service';
-
 import { parse } from 'csv-parse/sync';
+import axios from 'axios';
+import { load } from 'cheerio';
 
 @Injectable()
 export class BooksService {
@@ -24,7 +25,7 @@ export class BooksService {
       skip_empty_lines: true,
       trim: true,
       bom: true,
-    }) as Record<string, any>[];
+    });
 
     const results = {
       success: 0,
@@ -34,17 +35,18 @@ export class BooksService {
     // Parallel processing could be faster, but sequential is safer for duplicates/relations creation race conditions
     for (const [index, row] of records.entries()) {
       const line = index + 2; // +1 for header, +1 for 0-index
+      const msgRow = row as Record<string, any>;
       try {
         // Normalize keys to support variations (Title vs Book, Genre vs Genres)
         // Helper to find value case-insensitively or by alias
         const getField = (keys: string[]) => {
-          const rowKeys = Object.keys(row);
+          const rowKeys = Object.keys(msgRow);
           for (const k of keys) {
             // Exact match
-            if (row[k] !== undefined) return row[k];
+            if (msgRow[k] !== undefined) return msgRow[k];
             // Case insensitive match
             const foundKey = rowKeys.find(rk => rk.toLowerCase() === k.toLowerCase());
-            if (foundKey && row[foundKey] !== undefined) return row[foundKey];
+            if (foundKey && msgRow[foundKey] !== undefined) return msgRow[foundKey];
           }
           return undefined;
         };
@@ -331,5 +333,52 @@ export class BooksService {
       where: { id: bookId },
       data: { isAvailable: availableCount > 0 },
     });
+  }
+
+  async resolveCoverUrl(id: string): Promise<string> {
+    const book = await this.prisma.book.findUnique({ where: { id } });
+    if (!book) throw new NotFoundException('Book not found');
+
+    // If it's already an image URL (simple check) or not from the "bad" domain pattern, return it.
+    // However, if the user explicitly requests resolution, we might want to check anyway. 
+    // But to save resources, if it doesn't look like a Goodreads PAGE, we skip.
+    if (!book.coverUrl || !book.coverUrl.includes('goodreads.com/book/show/')) {
+      return book.coverUrl || '';
+    }
+
+    try {
+      // Scrape the Goodreads page
+      const { data } = await axios.get(book.coverUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        },
+        timeout: 5000,
+      });
+
+      const $ = load(data);
+      // Try og:image first
+      let imageUrl = $('meta[property="og:image"]').attr('content');
+
+      // Fallback to finding the image by id strictly
+      if (!imageUrl) {
+        imageUrl = $('#coverImage').attr('src');
+      }
+
+      if (imageUrl) {
+        // Update the database
+        await this.prisma.book.update({
+          where: { id },
+          data: { coverUrl: imageUrl },
+        });
+        return imageUrl;
+      }
+    } catch (error) {
+      console.warn(`Failed to resolve cover for book ${id} (${book.title}):`, error instanceof Error ? error.message : error);
+      // Do NOT rethrow, just return the original URL so the frontend doesn't crash
+      return book.coverUrl || '';
+    }
+
+    return book.coverUrl || '';
   }
 }

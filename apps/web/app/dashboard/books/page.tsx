@@ -2,12 +2,16 @@
 
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { BookCard } from '@/components/books/book-card';
+import { BookCard } from '@/components/book-card';
+import { RequestDialog } from '@/components/requests/request-dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FeaturedHero } from '@/components/featured-hero';
+import { BookCarousel } from "@/components/book-carousel";
+import { CategoryPills } from '@/components/category-pills';
 
 export default function BooksPage() {
     const [search, setSearch] = useState('');
@@ -44,35 +48,41 @@ export default function BooksPage() {
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <h2 className="text-2xl font-bold tracking-tight">Library Catalog</h2>
+            {/* 1. Featured Hero */}
+            <FeaturedHero />
 
-                <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-                    {/* Filter */}
-                    <div className="w-full md:w-[150px]">
-                        <Select onValueChange={setSelectedCategory} defaultValue="all">
-                            <SelectTrigger className="h-8 text-xs">
-                                <SelectValue placeholder="All Genres" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-[300px]">
-                                <SelectItem value="all">All Genres</SelectItem>
-                                {categories?.map((cat: any) => (
-                                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
+            {/* 2. Trending Carousel */}
+            {books && books.length > 0 && (
+                <div className="mb-4">
+                    <BookCarousel title="Trending Now" books={books.slice(0, 8)} />
+                </div>
+            )}
 
-                    {/* Search */}
-                    <div className="flex w-full md:w-[250px] items-center space-x-2">
-                        <Input
-                            placeholder="Search..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="h-8 text-xs"
-                        />
-                        <Button size="icon" className="h-8 w-8"><Search className="h-3 w-3" /></Button>
+            <div className="flex flex-col gap-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <h2 className="text-2xl font-bold tracking-tight">Curated Collection</h2>
+
+                    <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                        {/* Search */}
+                        <div className="flex w-full md:w-[250px] items-center space-x-2">
+                            <Input
+                                placeholder="Search..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="h-8 text-xs"
+                            />
+                            <Button size="icon" className="h-8 w-8"><Search className="h-3 w-3" /></Button>
+                        </div>
                     </div>
+                </div>
+
+                {/* Category Pills */}
+                <div className="w-full">
+                    <CategoryPills
+                        categories={categories || []}
+                        selectedId={selectedCategory}
+                        onSelect={setSelectedCategory}
+                    />
                 </div>
             </div>
 
@@ -82,11 +92,21 @@ export default function BooksPage() {
                 <div>Error loading books: {(error as any).message}</div>
             ) : (
                 <>
-                    <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8">
+                    <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4">
                         {books?.map((book: any) => (
-                            <div key={book.id} className="h-[280px]">
-                                <BookCard book={book} />
-                            </div>
+                            <BookCard
+                                key={book.id}
+                                book={book}
+                                hideGenre={true}
+                                action={
+                                    <RequestDialog
+                                        bookId={book.id}
+                                        bookTitle={book.title}
+                                        rentalPrice={Number(book.rentalPrice || 0)}
+                                        trigger={<Button className="w-full h-9 text-xs" disabled={!book.isAvailable}>Request</Button>}
+                                    />
+                                }
+                            />
                         ))}
                     </div>
                     {books?.length === 0 && <p className="text-muted-foreground">No books found matching your criteria.</p>}

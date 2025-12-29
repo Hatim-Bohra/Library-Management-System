@@ -2,8 +2,20 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
+    const isApi = request.nextUrl.pathname.startsWith('/api');
     const token = request.cookies.get('accessToken')?.value;
     const isDashboard = request.nextUrl.pathname.startsWith('/dashboard');
+
+    // Runtime API Proxy for Docker which fails with next.config.js rewrites in standalone mode
+    if (isApi) {
+        // In local dev `API_URL` might be missing, but in Docker it is set to http://api:3002
+        // We use a safe fallback that works for Docker internal networking.
+        const apiUrl = process.env.API_URL || 'http://api:3002';
+        const targetUrl = new URL(request.nextUrl.pathname, apiUrl);
+        // Preserve query parameters
+        targetUrl.search = request.nextUrl.search;
+        return NextResponse.rewrite(targetUrl);
+    }
     const isAuthPage = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register');
 
     if (isDashboard && !token) {
@@ -48,5 +60,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/dashboard/:path*', '/login', '/register'],
+    matcher: ['/dashboard/:path*', '/login', '/register', '/api/:path*'],
 };

@@ -1,56 +1,89 @@
 'use client';
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, Star } from 'lucide-react';
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Sparkles } from "lucide-react";
 
-export function FeaturedHero() {
-    return (
-        <section className="w-full py-12 md:py-24 bg-muted border-b">
-            <div className="container mx-auto px-4 md:px-6">
-                <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
-                    <div className="flex flex-col justify-center space-y-4">
-                        <div className="inline-flex items-center rounded-lg bg-background px-3 py-1 text-sm font-medium shadow-sm w-fit gap-2">
-                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                            <span>Book of the Month</span>
-                        </div>
-                        <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                            The Great Gatsby
-                        </h1>
-                        <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                            Dive into the Roaring Twenties with F. Scott Fitzgerald&apos;s masterpiece.
-                            A story of ambition, love, and the American Dream that resonates to this day.
-                        </p>
-                        <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                            <Button size="lg" asChild>
-                                <Link href="/dashboard/books">
-                                    Explore Library
-                                    <ArrowRight className="ml-2 h-4 w-4" />
-                                </Link>
-                            </Button>
-                            <Button size="lg" variant="outline" asChild>
-                                <Link href="/dashboard/books">
-                                    Browse Collection
-                                </Link>
-                            </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            *Available for instant digital rental.
+interface FeaturedHeroProps {
+    variant?: 'default' | 'compact';
+    book?: any; // Ideally this should be a proper type
+}
+
+export function FeaturedHero({ variant = 'default', book }: FeaturedHeroProps) {
+    // Fallback if no book provided yet (loading state or empty)
+    const displayBook = book || {
+        id: 'the-great-gatsby',
+        title: 'The Great Gatsby',
+        author: 'F. Scott Fitzgerald',
+        description: "Uncover the secrets of the Jazz Age. A story of obsession, wealth, and tragedy that defines the American Dream. Must read for every literature enthusiast.",
+        coverImage: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=2730&auto=format&fit=crop'
+    };
+
+    if (variant === 'compact') {
+        return (
+            <div className="relative overflow-hidden rounded-xl border bg-gradient-to-br from-indigo-500 to-purple-600 p-6 text-white shadow-lg">
+                <div className="relative z-10 flex flex-col gap-4">
+                    <div className="flex items-center gap-2 text-indigo-100">
+                        <Sparkles className="h-4 w-4" />
+                        <span className="text-xs font-semibold uppercase tracking-wider">Book of the Day</span>
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-bold leading-tight line-clamp-1">{displayBook.title}</h3>
+                        <p className="mt-1 text-sm text-indigo-100 line-clamp-2">
+                            {displayBook.description || `Experience the masterpiece by ${displayBook.author}.`}
                         </p>
                     </div>
-                    <div className="flex justify-center items-center">
-                        <div className="relative aspect-[2/3] w-[250px] md:w-[350px] rounded-xl overflow-hidden shadow-2xl transition-transform hover:scale-105 duration-500">
-                            {/* Placeholder generic cover if no specific one */}
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                src="https://covers.openlibrary.org/b/id/8406786-L.jpg"
-                                alt="The Great Gatsby Cover"
-                                className="object-cover w-full h-full"
-                            />
-                        </div>
+                    <Button variant="secondary" size="sm" className="w-full sm:w-auto" asChild>
+                        <Link href={`/books/${displayBook.id}`}>
+                            View Details <ArrowRight className="ml-2 h-3 w-3" />
+                        </Link>
+                    </Button>
+                </div>
+                {/* Decorative Pattern - Adjusted to be less aggressive */}
+                <div className="absolute right-0 top-0 -mr-16 -mt-16 h-48 w-48 rounded-full bg-white/10 blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 -ml-16 -mb-16 h-32 w-32 rounded-full bg-indigo-900/20 blur-2xl pointer-events-none" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-xl isolate">
+            {/* Background Image with Overlay */}
+            <div
+                className="absolute inset-0 -z-10 bg-cover bg-center"
+                style={{ backgroundImage: `url('${displayBook.coverImage || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=2730&auto=format&fit=crop'}')` }}
+            >
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-900/30" />
+            </div>
+
+            <div className="grid gap-8 p-8 md:p-12 lg:grid-cols-2 lg:gap-16">
+                <div className="flex flex-col justify-center gap-6">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-300 ring-1 ring-inset ring-indigo-500/20 w-fit">
+                        <Sparkles className="h-4 w-4" />
+                        <span>Book of the Day</span>
+                    </div>
+                    <div className="space-y-4">
+                        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                            {displayBook.title}
+                        </h2>
+                        <p className="text-lg leading-8 text-gray-300 line-clamp-3">
+                            {displayBook.description || `A masterpiece by ${displayBook.author}. Read it now on Lumina Library.`}
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap gap-4">
+                        <Button size="lg" className="bg-indigo-600 hover:bg-indigo-500" asChild>
+                            <Link href={`/books/${displayBook.id}`}>
+                                Read Now <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                        </Button>
+                        <Button variant="outline" size="lg" className="border-white/20 text-white hover:bg-white/10 hover:text-white" asChild>
+                            <Link href="/books">
+                                View Collections
+                            </Link>
+                        </Button>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
     );
 }

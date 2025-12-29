@@ -65,6 +65,20 @@ export class BooksController {
     return this.booksService.findOne(id);
   }
 
+  @Public()
+  @Get(':id/resolve-cover')
+  @ApiOperation({ summary: 'Resolve book cover URL from external sources' })
+  async resolveCover(@Param('id') id: string) {
+    try {
+      const url = await this.booksService.resolveCoverUrl(id);
+      return { url };
+    } catch (error) {
+      console.error(`Status 500 avoided: Failed to resolve cover for ${id}`, error);
+      // Return null or empty string to indicate failure gracefully to frontend
+      return { url: '' };
+    }
+  }
+
   @Roles(Role.ADMIN, Role.LIBRARIAN)
   @ApiBearerAuth()
   @Patch(':id')

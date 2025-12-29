@@ -17,27 +17,29 @@ export function BookCarousel({ title, books, loading }: BookCarouselProps) {
 
     return (
         <section className="w-full py-8">
-            <div className="container mx-auto px-4 md:px-6 space-y-4">
-                <div className="flex items-center justify-between">
+            <div className="space-y-4">
+                <div className="flex items-center justify-between px-1">
                     <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
-                    <Button variant="ghost" size="sm" asChild>
-                        <Link href="#catalog" className="flex items-center gap-1">
-                            See All <ArrowRight className="h-4 w-4" />
-                        </Link>
-                    </Button>
+                    {title && (
+                        <Button variant="ghost" size="sm" asChild>
+                            <Link href="#catalog" className="flex items-center gap-1">
+                                See All <ArrowRight className="h-4 w-4" />
+                            </Link>
+                        </Button>
+                    )}
                 </div>
 
                 <div className="relative">
                     <ScrollArea className="w-full whitespace-nowrap rounded-md">
-                        <div className="flex w-max space-x-4 pb-4">
+                        <div className="flex w-max space-x-4 pb-4 px-1">
                             {loading ? (
                                 Array.from({ length: 5 }).map((_, i) => (
-                                    <div key={i} className="w-[150px] h-[240px] bg-muted rounded-xl animate-pulse" />
+                                    <div key={i} className="w-[180px] h-[280px] bg-muted rounded-xl animate-pulse" />
                                 ))
                             ) : (
                                 books.map((book) => (
-                                    <div key={book.id} className="w-[160px] h-[280px]">
-                                        <BookCard book={book} />
+                                    <div key={book.id} className="w-[180px]">
+                                        <BookCard book={book} className="h-full" />
                                     </div>
                                 ))
                             )}

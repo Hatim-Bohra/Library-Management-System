@@ -29,9 +29,7 @@ async function bootstrap() {
   app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
   }));
-  app.useStaticAssets(join(process.cwd(), 'uploads'), {
-    prefix: '/uploads/',
-  });
+
 
   app.useGlobalPipes(new ValidationPipe({
     transform: true,

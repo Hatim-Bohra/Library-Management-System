@@ -9,6 +9,7 @@ interface User {
     sub: string;
     email: string;
     role: string;
+    name?: string;
     // Add other claims as needed
 }
 
