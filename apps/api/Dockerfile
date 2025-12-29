@@ -1,28 +1,14 @@
 FROM node:20-alpine AS base
 
-FROM base AS deps
-RUN apk add --no-cache libc6-compat openssl
-WORKDIR /app
-
-# Copy package files
-COPY package.json package-lock.json ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/database/package.json ./packages/database/
-COPY packages/email/package.json ./packages/email/
-
-# Install dependencies
-RUN npm ci
-
 FROM base AS builder
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-# Copy dependencies
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
-
-# Copy source code
+# Copy everything
 COPY . .
+
+# Install dependencies
+RUN npm ci
 
 # Generate Prisma Client
 RUN npx prisma generate --schema=./packages/database/prisma/schema.prisma
