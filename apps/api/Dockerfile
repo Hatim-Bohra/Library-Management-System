@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . .
 
 # Install all dependencies including workspaces
-RUN npm install
+RUN npm install --install-links
 
 # Generate Prisma Client
 RUN npx prisma generate --schema=./packages/database/prisma/schema.prisma
