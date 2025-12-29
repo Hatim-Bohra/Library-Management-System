@@ -29,7 +29,6 @@ export default function DashboardLayout({
         { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, roles: ['ADMIN', 'LIBRARIAN', 'MEMBER'] },
         { href: '/dashboard/books', label: 'Books', icon: Book, roles: ['ADMIN', 'LIBRARIAN', 'MEMBER'] },
         { href: '/dashboard/requests', label: 'My Requests', icon: Repeat, roles: ['MEMBER'] },
-        { href: '/dashboard/requests', label: 'My Requests', icon: Repeat, roles: ['MEMBER'] },
         { href: '/dashboard/my-loans', label: 'My Loans', icon: Users, roles: ['MEMBER'] },
         { href: '/dashboard/wishlist', label: 'My Wishlist', icon: Heart, roles: ['MEMBER'] },
 

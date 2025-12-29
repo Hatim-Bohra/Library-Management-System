@@ -36,7 +36,6 @@ function ResetPasswordForm() {
     const token = searchParams.get('token');
     const [success, setSuccess] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -139,16 +138,7 @@ function ResetPasswordForm() {
                                 <FormItem>
                                     <FormLabel>Confirm Password</FormLabel>
                                     <FormControl>
-                                        <div className="relative">
-                                            <Input type={showConfirmPassword ? "text" : "password"} {...field} className="pr-10" />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 cursor-pointer"
-                                            >
-                                                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                            </button>
-                                        </div>
+                                        <Input type={showPassword ? "text" : "password"} {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

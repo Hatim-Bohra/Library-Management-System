@@ -35,6 +35,8 @@ export class AuthService {
       newUser.id,
       newUser.email,
       newUser.role,
+      newUser.firstName,
+      newUser.lastName,
     );
     await this.createSession(newUser.id, tokens.refresh_token);
     return tokens;
@@ -56,7 +58,7 @@ export class AuthService {
       throw new ForbiddenException('Access Denied');
     }
 
-    const tokens = await this.getTokens(user.id, user.email, user.role);
+    const tokens = await this.getTokens(user.id, user.email, user.role, user.firstName, user.lastName);
     await this.createSession(user.id, tokens.refresh_token);
     return tokens;
   }
@@ -93,7 +95,7 @@ export class AuthService {
 
     if (!matchedSession) throw new ForbiddenException('Access Denied (Invalid Session)');
 
-    const tokens = await this.getTokens(user.id, user.email, user.role);
+    const tokens = await this.getTokens(user.id, user.email, user.role, user.firstName, user.lastName);
 
     // Rotate tokens: Update the session with new RT
     const hash = await this.hashData(tokens.refresh_token);
@@ -115,13 +117,18 @@ export class AuthService {
     userId: string,
     email: string,
     role: string,
+    firstName?: string,
+    lastName?: string,
   ): Promise<Tokens> {
+    const name = firstName && lastName ? `${firstName} ${lastName}` : firstName || undefined;
+
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(
         {
           sub: userId,
           email,
           role,
+          ...(name && { name }),
         },
         {
           secret: this.config.get<string>('JWT_ACCESS_SECRET'),
@@ -133,6 +140,7 @@ export class AuthService {
           sub: userId,
           email,
           role,
+          ...(name && { name }),
         },
         {
           secret: this.config.get<string>('JWT_REFRESH_SECRET'),
