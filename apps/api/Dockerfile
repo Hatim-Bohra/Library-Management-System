@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy everything
 COPY . .
 
-# Install dependencies for the entire monorepo
-RUN npm install --workspaces=false
+# Install all dependencies including workspaces
+RUN npm install
 
 # Generate Prisma Client
 RUN npx prisma generate --schema=./packages/database/prisma/schema.prisma
