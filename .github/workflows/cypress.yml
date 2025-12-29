@@ -31,28 +31,82 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Database
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Setup Environment Variables
         run: |
-          npm ci
-          # Create .env files
+          # Database package
           echo "DATABASE_URL=postgresql://user:password@localhost:5432/library?schema=public" > packages/database/.env
-          echo "DATABASE_URL=postgresql://user:password@localhost:5432/library?schema=public" > apps/api/.env
-          echo "JWT_ACCESS_SECRET=secure_access_secret" >> apps/api/.env
-          echo "JWT_REFRESH_SECRET=secure_refresh_secret" >> apps/api/.env
-          echo "NEXT_PUBLIC_API_URL=http://localhost:3002" > apps/web/.env
           
+          # API
+          cat > apps/api/.env << EOF
+          DATABASE_URL=postgresql://user:password@localhost:5432/library?schema=public
+          JWT_ACCESS_SECRET=secure_access_secret_for_testing_only
+          JWT_REFRESH_SECRET=secure_refresh_secret_for_testing_only
+          PORT=3002
+          NODE_ENV=test
+          EOF
+          
+          # Web
+          cat > apps/web/.env << EOF
+          NEXT_PUBLIC_API_URL=http://localhost:3002
+          API_URL=http://localhost:3002
+          EOF
+
+      - name: Generate Prisma Client & Push Schema
+        run: |
           npx turbo run db:generate
           npx turbo run db:push
         env:
           DATABASE_URL: "postgresql://user:password@localhost:5432/library?schema=public"
 
-      - name: Start Servers
+      - name: Build Applications
+        run: npx turbo run build --filter=api --filter=web
+        env:
+          DATABASE_URL: "postgresql://user:password@localhost:5432/library?schema=public"
+          JWT_ACCESS_SECRET: "secure_access_secret_for_testing_only"
+          JWT_REFRESH_SECRET: "secure_refresh_secret_for_testing_only"
+          NEXT_PUBLIC_API_URL: "http://localhost:3002"
+
+      - name: Start API Server
         run: |
-          npm run dev &
-          echo "Starting servers..."
+          cd apps/api
+          npm run start:prod &
+          echo $! > api.pid
+          cd ../..
+        env:
+          DATABASE_URL: "postgresql://user:password@localhost:5432/library?schema=public"
+          JWT_ACCESS_SECRET: "secure_access_secret_for_testing_only"
+          JWT_REFRESH_SECRET: "secure_refresh_secret_for_testing_only"
+          PORT: 3002
+
+      - name: Start Web Server
+        run: |
+          cd apps/web
+          npm run start &
+          echo $! > web.pid
+          cd ../..
+        env:
+          NEXT_PUBLIC_API_URL: "http://localhost:3002"
+          API_URL: "http://localhost:3002"
+          PORT: 3003
 
       - name: Wait for Servers
-        run: npx wait-on http://localhost:3002 http://localhost:3003 -t 120000 -v
+        run: |
+          echo "Waiting for API server on port 3002..."
+          npx wait-on http://localhost:3002 -t 120000 -v
+          echo "Waiting for Web server on port 3003..."
+          npx wait-on http://localhost:3003 -t 120000 -v
+          echo "Both servers are ready!"
+          # Verify API is responding
+          curl -f http://localhost:3002 || exit 1
 
       - name: Cypress run
         # Uses the official Cypress GitHub action https://github.com/cypress-io/github-action
@@ -73,6 +127,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # API & DB Configuration
           DATABASE_URL: "postgresql://user:password@localhost:5432/library?schema=public"
-          JWT_ACCESS_SECRET: "secure_access_secret"
-          JWT_REFRESH_SECRET: "secure_refresh_secret"
+          JWT_ACCESS_SECRET: "secure_access_secret_for_testing_only"
+          JWT_REFRESH_SECRET: "secure_refresh_secret_for_testing_only"
           NEXT_PUBLIC_API_URL: "http://localhost:3002"
+
+      - name: Stop Servers
+        if: always()
+        run: |
+          if [ -f apps/api/api.pid ]; then
+            kill $(cat apps/api/api.pid) || true
+          fi
+          if [ -f apps/web/web.pid ]; then
+            kill $(cat apps/web/web.pid) || true
+          fi
