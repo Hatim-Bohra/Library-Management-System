@@ -76,7 +76,7 @@ export function FeaturedHero({ variant = 'default', book }: FeaturedHeroProps) {
                                 Read Now <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
                         </Button>
-                        <Button variant="outline" size="lg" className="border-white/20 text-white hover:bg-white/10 hover:text-white" asChild>
+                        <Button variant="outline" size="lg" className="border-indigo-200/20 bg-indigo-500/10 text-indigo-100 hover:bg-indigo-500/20 hover:text-white" asChild>
                             <Link href="/books">
                                 View Collections
                             </Link>

@@ -27,8 +27,15 @@ const formSchema = z.object({
 
 import { useAuth } from '@/components/providers/auth-provider';
 
-export default function LoginPage() {
+import { useSearchParams } from 'next/navigation';
+
+import { Suspense } from 'react';
+
+function LoginForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const redirectUrl = searchParams.get('redirect') || searchParams.get('returnUrl');
+
     const { login: authLogin } = useAuth();
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -41,7 +48,7 @@ export default function LoginPage() {
     const mutation = useMutation({
         mutationFn: login, // API call
         onSuccess: (data) => { // API returns { access_token, refresh_token }
-            authLogin(data.access_token, data.refresh_token);
+            authLogin(data.access_token, data.refresh_token, redirectUrl || undefined);
             // Provider handles redirect
         },
         onError: (error: any) => {
@@ -107,5 +114,13 @@ export default function LoginPage() {
                 </p>
             </CardFooter>
         </Card >
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center p-8">Loading login form...</div>}>
+            <LoginForm />
+        </Suspense>
     );
 }

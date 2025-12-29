@@ -4,6 +4,14 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Book, LayoutDashboard, User } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function PublicNav() {
     const { isAuthenticated, user } = useAuth();
@@ -33,20 +41,28 @@ export function PublicNav() {
                     </div>
                     <nav className="flex items-center space-x-2">
                         {isAuthenticated ? (
-                            <>
-                                <Button variant="ghost" asChild>
-                                    <Link href="/dashboard">
-                                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                                        Dashboard
-                                    </Link>
-                                </Button>
-                                <Button variant="outline" size="icon" asChild>
-                                    <Link href="/dashboard/profile">
-                                        <User className="h-4 w-4" />
-                                        <span className="sr-only">Profile</span>
-                                    </Link>
-                                </Button>
-                            </>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="rounded-full">
+                                        <User className="h-5 w-5" />
+                                        <span className="sr-only">Toggle user menu</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/dashboard">Dashboard</Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/dashboard/profile">Profile</Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => window.location.href = '/login'}>
+                                        Logout
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         ) : (
                             <>
                                 <Button variant="ghost" asChild>

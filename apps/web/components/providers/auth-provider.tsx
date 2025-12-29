@@ -15,7 +15,7 @@ interface User {
 
 interface AuthContextType {
     user: User | null;
-    login: (accessToken: string, refreshToken: string) => void;
+    login: (accessToken: string, refreshToken: string, redirectPath?: string) => void;
     logout: () => void;
     isAuthenticated: boolean;
 }
@@ -47,14 +47,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, [logout]);
 
-    const login = (accessToken: string, refreshToken: string) => {
+    const login = (accessToken: string, refreshToken: string, redirectPath?: string) => {
         setCookie('accessToken', accessToken, { maxAge: 60 * 15, path: '/' }); // 15 mins
         setCookie('refreshToken', refreshToken, { maxAge: 60 * 60 * 24 * 7, path: '/' }); // 7 days
 
         try {
             const decoded = jwtDecode<User>(accessToken);
             setUser(decoded);
-            router.push('/dashboard');
+            router.push(redirectPath || '/dashboard');
         } catch (e) {
             console.error('Login failed: Invalid token');
         }
