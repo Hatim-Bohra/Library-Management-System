@@ -29,7 +29,7 @@ ENV NPM_CONFIG_FETCH_RETRY_FACTOR=2
 ENV NPM_CONFIG_FETCH_RETRY_MINTIMEOUT=10000
 ENV NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT=60000
 RUN npm config set registry https://registry.npmjs.org/
-RUN --mount=type=cache,id=npm,target=/root/.npm npm ci
+RUN npm ci
 
 # Build the project and its dependencies
 COPY --from=builder /app/out/full/ .
