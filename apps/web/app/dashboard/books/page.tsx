@@ -49,7 +49,9 @@ export default function BooksPage() {
     return (
         <div className="space-y-4">
             {/* 1. Featured Hero */}
-            <FeaturedHero />
+            <div className="mb-8">
+                <FeaturedHero book={books?.[1]} />
+            </div>
 
             {/* 2. Trending Carousel */}
             {books && books.length > 0 && (
@@ -58,26 +60,29 @@ export default function BooksPage() {
                 </div>
             )}
 
+            {/* Filters */}
             <div className="flex flex-col gap-6">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <h2 className="text-2xl font-bold tracking-tight">Curated Collection</h2>
+                <div className="w-full overflow-x-auto pb-2 min-w-0">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 min-w-[300px]">
+                        <h2 className="text-2xl font-bold tracking-tight">Curated Collection</h2>
 
-                    <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-                        {/* Search */}
-                        <div className="flex w-full md:w-[250px] items-center space-x-2">
-                            <Input
-                                placeholder="Search..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="h-8 text-xs"
-                            />
-                            <Button size="icon" className="h-8 w-8"><Search className="h-3 w-3" /></Button>
+                        <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                            {/* Search */}
+                            <div className="flex w-full md:w-[250px] items-center space-x-2">
+                                <Input
+                                    placeholder="Search..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="h-8 text-xs"
+                                />
+                                <Button size="icon" className="h-8 w-8"><Search className="h-3 w-3" /></Button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Category Pills */}
-                <div className="w-full">
+                <div className="w-full overflow-x-auto pb-2">
                     <CategoryPills
                         categories={categories || []}
                         selectedId={selectedCategory}
@@ -92,7 +97,7 @@ export default function BooksPage() {
                 <div>Error loading books: {(error as any).message}</div>
             ) : (
                 <>
-                    <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                         {books?.map((book: any) => (
                             <BookCard
                                 key={book.id}

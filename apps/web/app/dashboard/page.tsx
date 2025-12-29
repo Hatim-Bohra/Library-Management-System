@@ -158,6 +158,7 @@ export default function DashboardPage() {
 
                 {/* Compact Featured Book / Recommendation */}
                 <div className="lg:col-span-1">
+                    <h2 className="text-xl font-semibold mb-4 tracking-tight">Suggested for You</h2>
                     <FeaturedHero variant="compact" book={books?.[1]} />
                 </div>
             </div>

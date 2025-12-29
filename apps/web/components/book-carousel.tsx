@@ -16,7 +16,7 @@ export function BookCarousel({ title, books, loading }: BookCarouselProps) {
     if (!loading && (!books || books.length === 0)) return null;
 
     return (
-        <section className="w-full py-8">
+        <section className="w-full">
             <div className="space-y-4">
                 <div className="flex items-center justify-between px-1">
                     <h2 className="text-2xl font-bold tracking-tight">{title}</h2>

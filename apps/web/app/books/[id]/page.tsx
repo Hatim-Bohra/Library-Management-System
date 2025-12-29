@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { PublicNav } from '@/components/public-nav';
 import { useAuth } from '@/components/providers/auth-provider';
 import { RequestDialog } from '@/components/requests/request-dialog';
+import { WishlistButton } from '@/components/wishlist-button';
 import { useParams } from 'next/navigation';
 
 export default function BookDetailsPage() {
@@ -134,9 +135,9 @@ export default function BookDetailsPage() {
                                     </Link>
                                 </Button>
                             )}
-                            <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                                Add to Wishlist
-                            </Button>
+                            {isAuthenticated && (
+                                <WishlistButton bookId={book.id} variant="default" className="w-full sm:w-auto" />
+                            )}
                         </div>
                     </div>
                 </div>

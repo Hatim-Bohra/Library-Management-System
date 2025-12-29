@@ -34,6 +34,18 @@ model User {
   auditLogs             AuditLog[]
   inventoryTransactions InventoryTransaction[]
   bookRequests          BookRequest[]
+  wishlist              Wishlist[]
+}
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookId    String
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, bookId])
 }
 
 model Session {
@@ -110,6 +122,7 @@ model Book {
   loans          Loan[]
   reservations   Reservation[]
   bookRequests   BookRequest[]
+  wishlistedBy   Wishlist[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

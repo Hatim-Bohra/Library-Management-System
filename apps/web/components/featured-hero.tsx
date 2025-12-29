@@ -46,12 +46,23 @@ export function FeaturedHero({ variant = 'default', book }: FeaturedHeroProps) {
         );
     }
 
+    // access consistently
+    const coverUrl = displayBook.coverUrl || displayBook.coverImage;
+
+    // Fallback logic for hero background too
+    let finalHeroUrl = coverUrl;
+    if ((!finalHeroUrl || finalHeroUrl.includes('goodreads.com/book/show/')) && displayBook.isbn && displayBook.isbn.length > 5 && !displayBook.isbn.startsWith('AUTO')) {
+        finalHeroUrl = `https://covers.openlibrary.org/b/isbn/${displayBook.isbn}-L.jpg`;
+    }
+    // Final safety fallback
+    finalHeroUrl = finalHeroUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=2730&auto=format&fit=crop';
+
     return (
         <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-xl isolate">
             {/* Background Image with Overlay */}
             <div
                 className="absolute inset-0 -z-10 bg-cover bg-center"
-                style={{ backgroundImage: `url('${displayBook.coverImage || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=2730&auto=format&fit=crop'}')` }}
+                style={{ backgroundImage: `url('${finalHeroUrl}')` }}
             >
                 <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-900/30" />
             </div>
@@ -77,7 +88,7 @@ export function FeaturedHero({ variant = 'default', book }: FeaturedHeroProps) {
                             </Link>
                         </Button>
                         <Button variant="outline" size="lg" className="border-indigo-200/20 bg-indigo-500/10 text-indigo-100 hover:bg-indigo-500/20 hover:text-white" asChild>
-                            <Link href="/books">
+                            <Link href="/dashboard/books">
                                 View Collections
                             </Link>
                         </Button>

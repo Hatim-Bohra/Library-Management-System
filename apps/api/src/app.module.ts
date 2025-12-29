@@ -21,6 +21,7 @@ import { UploadsModule } from './uploads/uploads.module';
 import { RevenueModule } from './revenue/revenue.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { MailModule } from './mail/mail.module';
+import { WishlistModule } from './wishlist/wishlist.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { AppController } from './app.controller';
@@ -57,6 +58,7 @@ import { AppService } from './app.service';
     RevenueModule,
     NotificationsModule,
     MailModule,
+    WishlistModule,
   ],
   controllers: [AppController],
   providers: [

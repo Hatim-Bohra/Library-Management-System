@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Heart, MoreHorizontal, BookOpen } from 'lucide-react';
+import { WishlistButton } from "./wishlist-button";
 
 interface BookCardProps {
     book: Book;
@@ -69,18 +70,27 @@ export function BookCard({ book, variant = 'default', hideAvailability = false, 
 
     // Logic: Use resolved if available. Else, if original looks like an image, use it. 
     // If original is a goodreads PAGE url, we try to use it as a fallback only if resolved failed, but it likely won't work in <img>.
-    // So we basically stick to: Resolved -> Strong Candidate Original -> Fallback.
+    // So we basically stick to: Resolved -> Strong Candidate Original -> OpenLibrary Fallback -> Fallback Icon.
     let finalCoverUrl: string | null = resolvedUrl;
+
     if (!finalCoverUrl && originalUrlIsValid) {
         if (!book.coverUrl!.includes('goodreads.com/book/show/') || isProbableImageUrl(book.coverUrl)) {
             finalCoverUrl = book.coverUrl!.startsWith('http') ? book.coverUrl || null : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${book.coverUrl}`;
         }
     }
 
+    // New OpenLibrary Fallback
+    if (!finalCoverUrl && book.isbn && book.isbn.length > 5 && !book.isbn.startsWith('AUTO')) {
+        finalCoverUrl = `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg`;
+    }
+
     return (
         <div className={cn("group flex flex-col gap-3 h-full max-w-[200px] mx-auto sm:mx-0", className)}>
             {/* Kindle-style Card: Just the Cover Image with simple shadow */}
             <div className="relative aspect-[2/3] w-full rounded-md shadow-sm transition-all duration-500 ease-out group-hover:shadow-2xl group-hover:-translate-y-1 group-hover:scale-[1.02] bg-muted overflow-hidden">
+                {/* Full Card Click Area */}
+                <Link href={`/books/${book.id}`} className="absolute inset-0 z-0" aria-label={`View details for ${book.title}`} />
+
                 {finalCoverUrl && !imgError ? (
                     <Image
                         src={finalCoverUrl}
@@ -106,6 +116,9 @@ export function BookCard({ book, variant = 'default', hideAvailability = false, 
 
                 {/* Overlay Gradient on Hover for Actions (if needed) - Keeping it reliable/clean for now */}
                 {/* Availability Badge - Small & Floating */}
+                <div className="absolute top-2 left-2 z-10">
+                    <WishlistButton bookId={book.id} />
+                </div>
                 {!hideAvailability && (
                     <div className="absolute top-2 right-2">
                         <Badge
