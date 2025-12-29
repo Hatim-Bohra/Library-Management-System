@@ -1,0 +1,19 @@
+[phases.setup]
+nixPkgs = ["nodejs-20_x", "openssl"]
+
+[phases.install]
+cmds = [
+  "npm install"
+]
+
+[phases.build]
+cmds = [
+  "npx prisma generate --schema=./packages/database/prisma/schema.prisma",
+  "cd apps/api && npm run build"
+]
+
+[start]
+cmd = "cd apps/api && node dist/main"
+
+[variables]
+NODE_ENV = "production"
