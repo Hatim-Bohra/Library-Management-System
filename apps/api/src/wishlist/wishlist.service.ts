@@ -5,7 +5,7 @@ import { PrismaService } from '../database/prisma.service';
 export class WishlistService {
     constructor(private readonly prisma: PrismaService) { }
 
-    async getWishlist(userId: string) {
+    getWishlist(userId: string) {
         return this.prisma.wishlist.findMany({
             where: { userId },
             include: {
@@ -52,7 +52,7 @@ export class WishlistService {
         });
     }
 
-    async removeFromWishlist(userId: string, bookId: string) {
+    removeFromWishlist(userId: string, bookId: string) {
         return this.prisma.wishlist.delete({
             where: {
                 userId_bookId: { userId, bookId }

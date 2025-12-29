@@ -179,7 +179,7 @@ export class CirculationService {
     });
   }
 
-  async payFine(fineId: string, userId: string) {
+  payFine(fineId: string, userId: string) {
     return this.prisma.$transaction(async (tx) => {
       const fine = await tx.fine.findUnique({ where: { id: fineId } });
       if (!fine) throw new BadRequestException('Fine not found');
