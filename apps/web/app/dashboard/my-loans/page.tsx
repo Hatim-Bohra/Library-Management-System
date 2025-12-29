@@ -64,7 +64,7 @@ export default function LoansPage() {
     return (
         <div className="space-y-6">
             <h2 className="text-3xl font-bold tracking-tight">My Loans</h2>
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>

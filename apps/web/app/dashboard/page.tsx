@@ -146,7 +146,7 @@ export default function DashboardPage() {
 
             {/* Featured & Engagement */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-6">
+                <div className="lg:col-span-2 space-y-6 min-w-0">
                     {/* Trending Carousel */}
                     {books && books.length > 0 && (
                         <div>
@@ -183,7 +183,7 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Category Pills */}
-                        <div className="w-full">
+                        <div className="w-full overflow-x-auto min-w-0 pb-2">
                             <CategoryPills
                                 categories={categories || []}
                                 selectedId={selectedCategory}

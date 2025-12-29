@@ -44,34 +44,36 @@ export function FineBreakdown() {
                 </div>
             </CardHeader>
             <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Book</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead className="text-right">Amount</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {activeFines.map((fine: any) => (
-                            <TableRow key={fine.id}>
-                                <TableCell className="font-medium">
-                                    {fine.loan?.book?.title || 'Unknown Book'}
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant="outline">{fine.type}</Badge>
-                                </TableCell>
-                                <TableCell>
-                                    {new Date(fine.createdAt).toLocaleDateString()}
-                                </TableCell>
-                                <TableCell className="text-right font-bold text-red-600">
-                                    ${Number(fine.amount).toFixed(2)}
-                                </TableCell>
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Book</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {activeFines.map((fine: any) => (
+                                <TableRow key={fine.id}>
+                                    <TableCell className="font-medium">
+                                        {fine.loan?.book?.title || 'Unknown Book'}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline">{fine.type}</Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        {new Date(fine.createdAt).toLocaleDateString()}
+                                    </TableCell>
+                                    <TableCell className="text-right font-bold text-red-600">
+                                        ${Number(fine.amount).toFixed(2)}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
             </CardContent>
         </Card>
     );

@@ -38,7 +38,7 @@ export function BookCarousel({ title, books, loading }: BookCarouselProps) {
                                 ))
                             ) : (
                                 books.map((book) => (
-                                    <div key={book.id} className="w-[180px]">
+                                    <div key={book.id} className="w-[140px] sm:w-[160px] md:w-[180px]">
                                         <BookCard book={book} className="h-full" />
                                     </div>
                                 ))
