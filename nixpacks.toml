@@ -9,6 +9,7 @@ cmds = [
 [phases.build]
 cmds = [
   "npx prisma generate --schema=./packages/database/prisma/schema.prisma",
+  "cd packages/database && npm run build",
   "cd packages/email && npm run build",
   "cd apps/api && npm run build"
 ]
