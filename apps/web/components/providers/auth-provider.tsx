@@ -15,7 +15,7 @@ interface User {
 
 interface AuthContextType {
     user: User | null;
-    login: (accessToken: string, refreshToken: string, redirectPath?: string) => void;
+    login: (accessToken: string, refreshToken: string, rememberMe?: boolean, redirectPath?: string) => void;
     logout: () => void;
     isAuthenticated: boolean;
 }
@@ -47,9 +47,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, [logout]);
 
-    const login = (accessToken: string, refreshToken: string, redirectPath?: string) => {
+    const login = (accessToken: string, refreshToken: string, rememberMe = false, redirectPath?: string) => {
         setCookie('accessToken', accessToken, { maxAge: 60 * 15, path: '/' }); // 15 mins
-        setCookie('refreshToken', refreshToken, { maxAge: 60 * 60 * 24 * 7, path: '/' }); // 7 days
+
+        // Extended expiration if remember me is checked
+        const refreshTokenMaxAge = rememberMe
+            ? 60 * 60 * 24 * 30  // 30 days
+            : 60 * 60 * 24 * 7;  // 7 days
+
+        setCookie('refreshToken', refreshToken, { maxAge: refreshTokenMaxAge, path: '/' });
 
         try {
             const decoded = jwtDecode<User>(accessToken);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,12 +19,14 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { login } from '@/lib/auth';
 
 const formSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6),
+    rememberMe: z.boolean().optional(),
 });
 
 import { useAuth } from '@/components/providers/auth-provider';
@@ -45,13 +47,24 @@ function LoginForm() {
         defaultValues: {
             email: '',
             password: '',
+            rememberMe: false,
         },
     });
+
+    // Load saved email from localStorage on mount
+    useEffect(() => {
+        const savedEmail = localStorage.getItem('rememberedEmail');
+        if (savedEmail) {
+            form.setValue('email', savedEmail);
+            form.setValue('rememberMe', true);
+        }
+    }, [form]);
 
     const mutation = useMutation({
         mutationFn: login, // API call
         onSuccess: (data) => { // API returns { access_token, refresh_token }
-            authLogin(data.access_token, data.refresh_token, redirectUrl || undefined);
+            const rememberMe = form.getValues('rememberMe');
+            authLogin(data.access_token, data.refresh_token, rememberMe, redirectUrl || undefined);
             // Provider handles redirect
         },
         onError: (error: any) => {
@@ -62,6 +75,12 @@ function LoginForm() {
     });
 
     function onSubmit(values: z.infer<typeof formSchema>) {
+        // Save or clear email in localStorage based on rememberMe
+        if (values.rememberMe) {
+            localStorage.setItem('rememberedEmail', values.email);
+        } else {
+            localStorage.removeItem('rememberedEmail');
+        }
         mutation.mutate(values);
     }
 
@@ -112,6 +131,25 @@ function LoginForm() {
                                         </Link>
                                     </div>
                                     <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="rememberMe"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                    <FormControl>
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                        <FormLabel className="text-sm font-normal cursor-pointer">
+                                            Remember me
+                                        </FormLabel>
+                                    </div>
                                 </FormItem>
                             )}
                         />
