@@ -10,6 +10,7 @@ cmds = [
 cmds = [
   "npx prisma generate --schema=./packages/database/prisma/schema.prisma",
   "npx prisma db push --schema=./packages/database/prisma/schema.prisma --accept-data-loss --skip-generate",
+  "cd packages/database && npx prisma db seed",
   "cd packages/database && npm run build",
   "cd packages/email && npm run build",
   "cd apps/api && npm run build"
