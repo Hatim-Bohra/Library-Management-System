@@ -22,7 +22,12 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3003'],
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3003',
+      'https://library-management-system-web-alpha.vercel.app',
+      /\.vercel\.app$/, // Allow all Vercel preview deployments
+    ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
