@@ -6,7 +6,8 @@
     "types": "dist/index.d.ts",
     "scripts": {
         "dev": "email dev",
-        "build": "tsc && email build",
+        "build": "tsc",
+        "build:preview": "tsc && email build",
         "lint": "eslint ."
     },
     "dependencies": {
