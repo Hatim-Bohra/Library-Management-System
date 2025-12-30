@@ -137,7 +137,7 @@ export function BookCard({ book, variant = 'default', hideAvailability = false, 
             </div>
 
             {/* Verification/Info Area - Minimal */}
-            <div className="space-y-1 px-1">
+            <div className="flex flex-col flex-grow space-y-1 px-1">
                 <Link href={`/books/${book.id}`} className="block focus:outline-none">
                     <h3 className="font-medium text-sm leading-tight group-hover:text-primary transition-colors line-clamp-2" title={book.title}>
                         {book.title}
@@ -147,13 +147,13 @@ export function BookCard({ book, variant = 'default', hideAvailability = false, 
                     {authorName}
                 </p>
 
-                {/* Optional Price or Action - kept very minimal */}
+                {/* Optional Price or Action - kept very minimal, pushed to bottom */}
                 {action ? (
-                    <div className="pt-2">
+                    <div className="pt-2 mt-auto">
                         {action}
                     </div>
                 ) : (
-                    <div className="pt-1 flex items-center justify-between">
+                    <div className="pt-1 mt-auto flex items-center justify-between">
                         <Link href={`/books/${book.id}`} className="text-xs font-medium text-primary hover:underline decoration-primary/30 underline-offset-4">
                             Details
                         </Link>
