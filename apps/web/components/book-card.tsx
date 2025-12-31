@@ -53,10 +53,6 @@ export function BookCard({ book, variant = 'default', hideAvailability = false, 
     }, [book.coverUrl, book.id]);
 
     // Determine final image URL
-    // 1. Resolved URL from API
-    // 2. Original URL if it looks like an image (http/s or relative) AND isn't strictly a "page" URL that we know fails directly in <img> tags
-    //    (though some goodreads URLs are images, usually they are hosted on distinct domains. We'll trust the component logic largely but be more permissive on fallback)
-
     const isProbableImageUrl = (url?: string) => {
         if (!url) return false;
         if (url.startsWith('/')) return true; // Local
@@ -68,9 +64,6 @@ export function BookCard({ book, variant = 'default', hideAvailability = false, 
 
     const originalUrlIsValid = book.coverUrl && (book.coverUrl.startsWith('http') || book.coverUrl.startsWith('/'));
 
-    // Logic: Use resolved if available. Else, if original looks like an image, use it. 
-    // If original is a goodreads PAGE url, we try to use it as a fallback only if resolved failed, but it likely won't work in <img>.
-    // So we basically stick to: Resolved -> Strong Candidate Original -> OpenLibrary Fallback -> Fallback Icon.
     let finalCoverUrl: string | null = resolvedUrl;
 
     if (!finalCoverUrl && originalUrlIsValid) {
@@ -85,11 +78,12 @@ export function BookCard({ book, variant = 'default', hideAvailability = false, 
     }
 
     return (
-        <div className={cn("group flex flex-col gap-3 h-full max-w-[200px] mx-auto sm:mx-0", className)}>
+        <div className={cn("group relative flex flex-col gap-3 h-full max-w-[200px] mx-auto sm:mx-0", className)}>
+            {/* Absolute Link covering the entire card */}
+            <Link href={`/books/${book.id}`} className="absolute inset-0 z-0 rounded-md" aria-label={`View details for ${book.title}`} />
+
             {/* Kindle-style Card: Just the Cover Image with simple shadow */}
-            <div className="relative aspect-[2/3] w-full rounded-md shadow-sm transition-all duration-500 ease-out group-hover:shadow-2xl group-hover:-translate-y-1 group-hover:scale-[1.02] bg-muted overflow-hidden">
-                {/* Full Card Click Area */}
-                <Link href={`/books/${book.id}`} className="absolute inset-0 z-0" aria-label={`View details for ${book.title}`} />
+            <div className="relative aspect-[2/3] w-full rounded-md shadow-sm transition-all duration-500 ease-out group-hover:shadow-2xl group-hover:-translate-y-1 group-hover:scale-[1.02] bg-muted overflow-hidden pointer-events-none">
 
                 {finalCoverUrl && !imgError ? (
                     <Image
@@ -113,52 +107,59 @@ export function BookCard({ book, variant = 'default', hideAvailability = false, 
                         </span>
                     </div>
                 )}
-
-                {/* Overlay Gradient on Hover for Actions (if needed) - Keeping it reliable/clean for now */}
-                {/* Availability Badge - Small & Floating */}
-                <div className="absolute top-2 left-2 z-10">
-                    <WishlistButton bookId={book.id} />
-                </div>
-                {!hideAvailability && (
-                    <div className="absolute top-2 right-2">
-                        <Badge
-                            variant="secondary"
-                            className={cn(
-                                "h-5 px-1.5 text-[10px] font-medium backdrop-blur-md border-0 shadow-sm",
-                                isAvailable
-                                    ? "bg-emerald-500/90 text-white hover:bg-emerald-600"
-                                    : "bg-rose-500/90 text-white hover:bg-rose-600"
-                            )}
-                        >
-                            {availableCount > 0 ? 'In Stock' : 'Out'}
-                        </Badge>
-                    </div>
-                )}
             </div>
 
+            {/* Interactive Elements on top of the image need pointer-events-auto */}
+            <div className="absolute top-2 left-2 z-10 pointer-events-auto">
+                <WishlistButton bookId={book.id} />
+            </div>
+            {!hideAvailability && (
+                <div className="absolute top-2 right-2 z-10 pointer-events-auto">
+                    <Badge
+                        variant="secondary"
+                        className={cn(
+                            "h-5 px-1.5 text-[10px] font-medium backdrop-blur-md border-0 shadow-sm",
+                            isAvailable
+                                ? "bg-emerald-500/90 text-white hover:bg-emerald-600"
+                                : "bg-rose-500/90 text-white hover:bg-rose-600"
+                        )}
+                    >
+                        {availableCount > 0 ? 'In Stock' : 'Out'}
+                    </Badge>
+                </div>
+            )}
+
             {/* Verification/Info Area - Fixed heights for consistency */}
-            <div className="flex flex-col flex-grow px-1">
-                <Link href={`/books/${book.id}`} className="block focus:outline-none">
-                    {/* Fixed height for title - always 2 lines worth of space */}
-                    <h3 className="font-medium text-sm leading-tight group-hover:text-primary transition-colors line-clamp-2 min-h-[2.5rem]" title={book.title}>
-                        {book.title}
-                    </h3>
-                </Link>
+            {/* We make this relative so the text is visible, but clicks fall through to the link behind unless specified otherwise? 
+                Actually, text selection might be an issue if covered by link. 
+                Standard pattern: The link covers everything. If we want text selection, we need careful z-indexing. 
+                But 'Clickable Card' usually implies the whole thing is a link.
+            */}
+            <div className="flex flex-col flex-grow px-1 pointer-events-none">
+                {/* Fixed height for title - always 2 lines worth of space */}
+                <h3 className="font-medium text-sm leading-tight group-hover:text-primary transition-colors line-clamp-2 min-h-[2.5rem]" title={book.title}>
+                    {book.title}
+                </h3>
+
                 {/* Fixed height for author - always 1 line */}
                 <p className="text-xs text-muted-foreground line-clamp-1 min-h-[1.25rem] mb-2">
                     {authorName}
                 </p>
 
                 {/* Action area - pushed to bottom with mt-auto */}
+                {/* Actions need to be clickable, so pointer-events-auto */}
                 {action ? (
-                    <div className="mt-auto">
+                    <div className="mt-auto pointer-events-auto relative z-10">
                         {action}
                     </div>
                 ) : (
                     <div className="mt-auto flex items-center justify-between">
-                        <Link href={`/books/${book.id}`} className="text-xs font-medium text-primary hover:underline decoration-primary/30 underline-offset-4">
+                        {/* These are just text/visuals now, the whole card is the link. duplicate link is fine or remove it. 
+                             Let's keep the visual 'Details' but strictly it's part of the card link now. 
+                         */}
+                        <span className="text-xs font-medium text-primary decoration-primary/30 underline-offset-4 group-hover:underline">
                             Details
-                        </Link>
+                        </span>
                         {rentalPrice > 0 && (
                             <span className="text-xs font-mono text-muted-foreground">${rentalPrice.toFixed(2)}</span>
                         )}

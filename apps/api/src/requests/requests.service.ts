@@ -179,6 +179,7 @@ export class RequestsService {
 
     const request = (await this.prisma.bookRequest.findUnique({
       where: { id },
+      include: { book: true }
     }));
 
     if (!request) throw new NotFoundException('Request not found');
@@ -268,29 +269,44 @@ export class RequestsService {
     // Update availability
     await this.booksService.checkAvailability(request.bookId);
 
+    // Notify User
+    await this.notificationsService.notifyUser(
+      request.userId,
+      `Request Update: Your request for "${request.book.title}" has been approved. Please collect it within 24 hours.`,
+      NotificationType.SUCCESS
+    );
+
     return result;
   }
 
   async reject(id: string, rejectRequestDto: RejectRequestDto) {
-    const request = await this.prisma.bookRequest.findUnique({ where: { id } });
+    const request = await this.prisma.bookRequest.findUnique({ where: { id }, include: { book: true } });
     if (!request) throw new NotFoundException('Request not found');
     if (request.status !== BookRequestStatus.PENDING) {
       throw new BadRequestException('Request is not pending');
     }
 
-    return this.prisma.bookRequest.update({
+    const result = await this.prisma.bookRequest.update({
       where: { id },
       data: {
         status: BookRequestStatus.REJECTED,
         rejectionReason: rejectRequestDto.reason,
       },
     });
+
+    await this.notificationsService.notifyUser(
+      request.userId,
+      `Request Update: Your request for "${request.book.title}" has been rejected. Reason: ${rejectRequestDto.reason}`,
+      NotificationType.WARNING // Or ERROR
+    );
+
+    return result;
   }
 
   async collect(id: string) {
     const request = await this.prisma.bookRequest.findUnique({
       where: { id },
-      include: { inventoryItem: true },
+      include: { inventoryItem: true, book: true },
     });
 
     if (!request) throw new NotFoundException('Request not found');
@@ -310,7 +326,7 @@ export class RequestsService {
       );
     }
 
-    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Fetch Applicable Rule
       // Ideally we get the user's role. For now assuming MEMBER or fetching user role if needed.
       // But wait, request.user isn't included. We need to fetch it or rely on userId.
@@ -384,10 +400,19 @@ export class RequestsService {
         data: { status: BookRequestStatus.FULFILLED },
       });
     });
+
+    await this.notificationsService.notifyUser(
+      request.userId,
+      `Book Collected: You have successfully collected "${request.book.title}". Happy Reading!`,
+      NotificationType.SUCCESS
+    );
+
+    return result;
   }
   async dispatch(id: string) {
     const request = await this.prisma.bookRequest.findUnique({
       where: { id },
+      include: { book: true }
     });
 
     if (!request) throw new NotFoundException('Request not found');
@@ -398,16 +423,24 @@ export class RequestsService {
       throw new BadRequestException('Only delivery requests can be dispatched');
     }
 
-    return this.prisma.bookRequest.update({
+    const result = await this.prisma.bookRequest.update({
       where: { id },
       data: { status: BookRequestStatus.OUT_FOR_DELIVERY },
     });
+
+    await this.notificationsService.notifyUser(
+      request.userId,
+      `Delivery Update: Your book "${request.book.title}" is out for delivery.`,
+      NotificationType.INFO
+    );
+
+    return result;
   }
 
   async confirmDelivery(id: string) {
     const request = await this.prisma.bookRequest.findUnique({
       where: { id },
-      include: { inventoryItem: true },
+      include: { inventoryItem: true, book: true },
     });
 
     if (!request) throw new NotFoundException('Request not found');
@@ -420,7 +453,7 @@ export class RequestsService {
       throw new BadRequestException('No inventory item allocated');
     }
 
-    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const result = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Fetch Applicable Rule
       const user = await tx.user.findUnique({ where: { id: request.userId } });
       const rule = user
@@ -488,11 +521,20 @@ export class RequestsService {
         data: { status: BookRequestStatus.FULFILLED },
       });
     });
+
+    await this.notificationsService.notifyUser(
+      request.userId,
+      `Delivery Confirmed: "${request.book.title}" has been delivered. Enjoy!`,
+      NotificationType.SUCCESS
+    );
+
+    return result;
   }
 
   async failDelivery(id: string, reason: string) {
     const request = await this.prisma.bookRequest.findUnique({
       where: { id },
+      include: { book: true }
     });
 
     if (!request) throw new NotFoundException('Request not found');
@@ -500,12 +542,20 @@ export class RequestsService {
       throw new BadRequestException('Request must be out for delivery to fail');
     }
 
-    return this.prisma.bookRequest.update({
+    const result = await this.prisma.bookRequest.update({
       where: { id },
       data: {
         status: BookRequestStatus.DELIVERY_FAILED,
         rejectionReason: reason,
       },
     });
+
+    await this.notificationsService.notifyUser(
+      request.userId,
+      `Delivery Failed: Could not deliver "${request.book.title}". Reason: ${reason}`,
+      NotificationType.ERROR
+    );
+
+    return result;
   }
 }
