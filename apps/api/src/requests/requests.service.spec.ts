@@ -73,6 +73,7 @@ describe('RequestsService', () => {
           useValue: {
             createNotification: jest.fn(),
             notifyRoles: jest.fn(),
+            notifyUser: jest.fn(),
           }
         }
       ],
@@ -146,8 +147,10 @@ describe('RequestsService', () => {
       const requestId = 'req-1';
       const mockRequest = {
         id: requestId,
+        userId: 'user-1',
         bookId: 'book-1',
         status: BookRequestStatus.PENDING,
+        book: { title: 'Test Book' },
       };
       const mockInventory = {
         id: 'inv-1',
@@ -170,6 +173,7 @@ describe('RequestsService', () => {
 
       expect(mockTransactions.bookRequest.findUnique).toHaveBeenCalledWith({
         where: { id: requestId },
+        include: { book: true }
       });
       expect(mockTransactions.inventoryItem.findFirst).toHaveBeenCalled();
       expect(mockTransactions.inventoryItem.update).toHaveBeenCalled();

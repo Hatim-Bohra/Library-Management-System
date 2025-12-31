@@ -17,10 +17,13 @@ export default function BooksPage() {
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
+    const [page, setPage] = useState(1);
+    const pageSize = 24;
 
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(search);
+            setPage(1); // Reset to page 1 on search
         }, 500);
         return () => clearTimeout(timer);
     }, [search]);
@@ -34,17 +37,23 @@ export default function BooksPage() {
         },
     });
 
-    const { data: books, isLoading, error } = useQuery({
-        queryKey: ['books', debouncedSearch, selectedCategory],
+    const { data: booksData, isLoading, error } = useQuery({
+        queryKey: ['books', debouncedSearch, selectedCategory, page],
         queryFn: async () => {
-            const params: any = { limit: 50 };
+            const params: any = { limit: pageSize, page };
             if (debouncedSearch) params.q = debouncedSearch;
             if (selectedCategory && selectedCategory !== 'all') params.categoryId = selectedCategory;
 
             const { data } = await api.get('/books', { params });
             return data;
-        }
+        },
+        placeholderData: (previousData) => previousData, // keep previous data while fetching new
     });
+
+    // Handle simple array response from API (if API doesn't return count, we just check if full page returned)
+    const books = Array.isArray(booksData) ? booksData : [];
+    // If API doesn't return total, we guess: if we got full pageSize, next page might exist.
+    const hasMore = books.length === pageSize;
 
     return (
         <div className="space-y-4">
@@ -62,8 +71,8 @@ export default function BooksPage() {
 
             {/* Filters */}
             <div className="flex flex-col gap-6">
-                <div className="w-full overflow-x-auto pb-2 min-w-0">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 min-w-[300px]">
+                <div className="w-full">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                         <h2 className="text-2xl font-bold tracking-tight">Curated Collection</h2>
 
                         <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
@@ -73,21 +82,25 @@ export default function BooksPage() {
                                     placeholder="Search..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    className="h-8 text-xs"
+                                    className="h-9"
                                 />
-                                <Button size="icon" className="h-8 w-8"><Search className="h-3 w-3" /></Button>
+                                <Button size="icon" className="h-9 w-9"><Search className="h-4 w-4" /></Button>
                             </div>
+
+                            {/* Category Filter (Dropdown) */}
+                            <Select value={selectedCategory} onValueChange={(val) => { setSelectedCategory(val); setPage(1); }}>
+                                <SelectTrigger className="w-full md:w-[200px] h-9">
+                                    <SelectValue placeholder="Select Genre" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Genres</SelectItem>
+                                    {categories?.map((cat: any) => (
+                                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
-                </div>
-
-                {/* Category Pills */}
-                <div className="w-full overflow-x-auto pb-2">
-                    <CategoryPills
-                        categories={categories || []}
-                        selectedId={selectedCategory}
-                        onSelect={setSelectedCategory}
-                    />
                 </div>
             </div>
 
@@ -114,7 +127,28 @@ export default function BooksPage() {
                             />
                         ))}
                     </div>
-                    {books?.length === 0 && <p className="text-muted-foreground">No books found matching your criteria.</p>}
+                    {books?.length === 0 && <p className="text-muted-foreground text-center py-10">No books found matching your criteria.</p>}
+
+                    {/* Pagination Controls */}
+                    <div className="flex items-center justify-center gap-2 mt-8 py-4">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                            disabled={page === 1}
+                        >
+                            Previous
+                        </Button>
+                        <span className="text-sm font-medium mx-2">Page {page}</span>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPage(p => p + 1)}
+                            disabled={!hasMore || books.length === 0}
+                        >
+                            Next
+                        </Button>
+                    </div>
                 </>
             )}
         </div>

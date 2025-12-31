@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { PublicNav } from '@/components/public-nav';
 import { BookGrid } from '@/components/book-grid';
@@ -10,50 +10,41 @@ import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { FeaturedHero } from '@/components/featured-hero';
 import { BookCarousel } from '@/components/book-carousel';
-import { CategoryPills } from '@/components/category-pills';
 import Link from 'next/link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function Home() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<string>('all');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 24;
 
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
+      setPage(1);
     }, 500);
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Fetch Books with Infinite Scroll
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading: booksLoading
-  } = useInfiniteQuery({
-    queryKey: ['public-books', debouncedSearch, category],
-    queryFn: async ({ pageParam = 1 }) => {
-      const params: any = { page: pageParam, limit: 24 }; // 24 is divisible by 2,3,4
+  // Fetch Books with standard pagination
+  const { data: booksData, isLoading: booksLoading, isPlaceholderData } = useQuery({
+    queryKey: ['public-books', debouncedSearch, category, page],
+    queryFn: async () => {
+      const params: any = { page, limit: pageSize };
       if (debouncedSearch) params.q = debouncedSearch;
       if (category && category !== 'all') params.categoryId = category;
 
       const { data } = await api.get('/books', { params });
-      return data; // Expects API to return array directly based on current Controller
+      return data;
     },
-    getNextPageParam: (lastPage, allPages) => {
-      // API currently returns just an array, so we don't know total.
-      // Heuristic: If lastPage < limit, no more.
-      return lastPage.length === 24 ? allPages.length + 1 : undefined;
-    },
-    initialPageParam: 1,
-    refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData,
   });
 
-  // Flatten pages
-  const books = data?.pages.flatMap(page => page) || [];
+  const books = Array.isArray(booksData) ? booksData : [];
+  const hasMore = books.length === pageSize;
 
   // Fetch Categories
   const { data: categories } = useQuery({
@@ -67,7 +58,18 @@ export default function Home() {
 
   // Derived state for "Trending" (Just slicing for demo/MVP)
   // Ideally this would be a separate API call /books/trending
-  const trendingBooks = books ? books.slice(0, 8) : [];
+  // Note: Since we paginate now, "Trending" should ideally be a separate query if we want it consistent regardless of page.
+  // For now, I'll keep using the current books or fetch separately if needed. 
+  // BETTER: Let's fetch trending separately so it doesn't change when user paginates the catalog.
+  const { data: trendingBooks } = useQuery({
+    queryKey: ['trending-books'],
+    queryFn: async () => {
+      const { data } = await api.get('/books', { params: { limit: 8 } });
+      return data;
+    },
+    staleTime: 60000,
+  });
+
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -78,7 +80,7 @@ export default function Home() {
         <FeaturedHero book={trendingBooks?.[0]} />
 
         {/* 2. Trending Carousel - Social Proof */}
-        <BookCarousel title="Trending Now" books={trendingBooks} loading={booksLoading} />
+        <BookCarousel title="Trending Now" books={trendingBooks || []} loading={!trendingBooks} />
       </div>
 
       {/* 3. Main Catalog Section */}
@@ -93,29 +95,37 @@ export default function Home() {
                 <p className="text-muted-foreground mt-1">Explore our entire library of knowledge.</p>
               </div>
 
-              {/* Search Bar - Sticky on Mobile? */}
-              <div className="relative w-full md:w-[300px]">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search title, author..."
-                  className="pl-9 bg-background"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
+              <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                {/* Search Bar */}
+                <div className="relative w-full md:w-[300px]">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Search title, author..."
+                    className="pl-9 bg-background h-10"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+
+                {/* Category Filter (Dropdown) */}
+                <Select value={category} onValueChange={(val) => { setCategory(val); setPage(1); }}>
+                  <SelectTrigger className="w-full md:w-[200px] h-10 bg-background">
+                    <SelectValue placeholder="Select Genre" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Genres</SelectItem>
+                    {categories?.map((cat: any) => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-
-            {/* Category Pills */}
-            <CategoryPills
-              categories={categories}
-              selectedId={category}
-              onSelect={setCategory}
-            />
           </div>
 
           {/* Grid */}
-          {booksLoading ? (
+          {booksLoading && !isPlaceholderData ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => <div key={i} className="h-[280px] bg-muted animate-pulse rounded-xl" />)}
             </div>
@@ -131,6 +141,25 @@ export default function Home() {
                   <Button variant="link" onClick={() => { setSearch(''); setCategory('all'); }}>Clear Filters</Button>
                 </div>
               )}
+
+              {/* Pagination Controls */}
+              <div className="flex items-center justify-center gap-2 mt-12 py-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1 || booksLoading}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm font-medium mx-4">Page {page}</span>
+                <Button
+                  variant="outline"
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={!hasMore || books.length === 0 || booksLoading}
+                >
+                  Next
+                </Button>
+              </div>
             </>
           )}
 
