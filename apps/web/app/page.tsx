@@ -43,8 +43,9 @@ export default function Home() {
     placeholderData: (previousData) => previousData,
   });
 
-  const books = Array.isArray(booksData) ? booksData : [];
-  const hasMore = books.length === pageSize;
+  const books = Array.isArray(booksData?.data) ? booksData.data : [];
+  const meta = booksData?.meta;
+  const hasMore = meta ? page < meta.lastPage : false;
 
   // Fetch Categories
   const { data: categories } = useQuery({
@@ -143,23 +144,35 @@ export default function Home() {
               )}
 
               {/* Pagination Controls */}
-              <div className="flex items-center justify-center gap-2 mt-12 py-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1 || booksLoading}
-                >
-                  Previous
-                </Button>
-                <span className="text-sm font-medium mx-4">Page {page}</span>
-                <Button
-                  variant="outline"
-                  onClick={() => setPage(p => p + 1)}
-                  disabled={!hasMore || books.length === 0 || booksLoading}
-                >
-                  Next
-                </Button>
-              </div>
+              {meta && (
+                <div className="flex items-center justify-center gap-4 py-8">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => {
+                      setPage(p => Math.max(1, p - 1));
+                      window.scrollTo({ top: document.getElementById('catalog')?.offsetTop || 0, behavior: 'smooth' });
+                    }}
+                    disabled={page === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-lg font-medium">
+                    Page {meta.page} of {meta.lastPage}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => {
+                      setPage(p => p + 1);
+                      window.scrollTo({ top: document.getElementById('catalog')?.offsetTop || 0, behavior: 'smooth' });
+                    }}
+                    disabled={page >= meta.lastPage}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
             </>
           )}
 

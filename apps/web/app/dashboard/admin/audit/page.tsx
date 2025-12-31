@@ -25,19 +25,27 @@ export default function AdminAuditPage() {
             const details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
             if (!details) return '-';
 
+            // Override specific fields
             if (log.action === 'BOOK_OVERRIDE' && details.field === 'isAvailable') {
                 return `Manually changed availability from ${details.oldValue ? 'Available' : 'Unavailable'} to ${details.newValue ? 'Available' : 'Unavailable'}. Reason: ${details.reason}`;
             }
 
-            // Generic fallback for other updates
+            // General updates
             if (details.field && details.oldValue !== undefined && details.newValue !== undefined) {
                 return `Changed ${details.field} from "${details.oldValue}" to "${details.newValue}"`;
             }
 
-            // If it's just a reason string or object
-            if (details.reason) return `Reason: ${details.reason}`;
+            // Object with keys
+            if (typeof details === 'object' && !Array.isArray(details)) {
+                // If it looks like a simple key-value pair update
+                const keys = Object.keys(details).filter(k => k !== 'reason');
+                if (keys.length > 0 && keys.every(k => typeof details[k] !== 'object')) {
+                    const changes = keys.map(k => `${k}: ${details[k]}`).join(', ');
+                    return details.reason ? `${changes} (Reason: ${details.reason})` : changes;
+                }
+            }
 
-            // Fallback to formatted JSON if structural
+            // Fallback to formatted JSON
             return JSON.stringify(details, null, 2);
         } catch (e) {
             return String(log.details);

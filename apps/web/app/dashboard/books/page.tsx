@@ -50,10 +50,8 @@ export default function BooksPage() {
         placeholderData: (previousData) => previousData, // keep previous data while fetching new
     });
 
-    // Handle simple array response from API (if API doesn't return count, we just check if full page returned)
-    const books = Array.isArray(booksData) ? booksData : [];
-    // If API doesn't return total, we guess: if we got full pageSize, next page might exist.
-    const hasMore = books.length === pageSize;
+    const books = booksData?.data || [];
+    const meta = booksData?.meta;
 
     return (
         <div className="space-y-4">
@@ -130,25 +128,29 @@ export default function BooksPage() {
                     {books?.length === 0 && <p className="text-muted-foreground text-center py-10">No books found matching your criteria.</p>}
 
                     {/* Pagination Controls */}
-                    <div className="flex items-center justify-center gap-2 mt-8 py-4">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPage(p => Math.max(1, p - 1))}
-                            disabled={page === 1}
-                        >
-                            Previous
-                        </Button>
-                        <span className="text-sm font-medium mx-2">Page {page}</span>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setPage(p => p + 1)}
-                            disabled={!hasMore || books.length === 0}
-                        >
-                            Next
-                        </Button>
-                    </div>
+                    {meta && (
+                        <div className="flex items-center justify-center gap-2 mt-8 py-4">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                            >
+                                Previous
+                            </Button>
+                            <span className="text-sm font-medium mx-2">
+                                Page {meta.page} of {meta.lastPage}
+                            </span>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPage(p => p + 1)}
+                                disabled={page >= meta.lastPage}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    )}
                 </>
             )}
         </div>

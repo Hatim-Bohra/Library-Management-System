@@ -64,18 +64,25 @@ export default function DashboardPage() {
         enabled: !!user && user.role === 'MEMBER'
     });
 
-    const { data: books, isLoading: booksLoading } = useQuery({
-        queryKey: ['dashboard-books', debouncedSearch, selectedCategory],
+    const [page, setPage] = useState(1);
+    const pageSize = 12;
+
+    const { data: booksData, isLoading: booksLoading } = useQuery({
+        queryKey: ['dashboard-books', debouncedSearch, selectedCategory, page],
         queryFn: async () => {
-            const params: any = {};
+            const params: any = { page, limit: pageSize };
             if (debouncedSearch) params.q = debouncedSearch;
             if (selectedCategory && selectedCategory !== 'all') params.categoryId = selectedCategory;
 
             const { data } = await api.get('/books', { params });
             return data;
         },
-        enabled: !!user && user.role === 'MEMBER'
+        enabled: !!user && user.role === 'MEMBER',
+        placeholderData: (previousData) => previousData,
     });
+
+    const books = booksData?.data || [];
+    const meta = booksData?.meta;
 
     if (statsLoading) {
         return (
@@ -170,26 +177,38 @@ export default function DashboardPage() {
                         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                             <h2 className="text-2xl font-bold tracking-tight">Browse Collection</h2>
 
-                            {/* Search */}
-                            <div className="flex w-full md:w-[300px] items-center space-x-2">
-                                <Input
-                                    type="search"
-                                    placeholder="Search title, author, isbn..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    className="bg-background"
-                                />
-                                <Button size="icon" variant="ghost"><Search className="h-4 w-4" /></Button>
-                            </div>
-                        </div>
+                            <div className="flex gap-2 w-full md:w-auto">
+                                {/* Search */}
+                                <div className="flex w-full md:w-[250px] items-center space-x-2">
+                                    <Input
+                                        type="search"
+                                        placeholder="Search title..."
+                                        value={search}
+                                        onChange={(e) => {
+                                            setSearch(e.target.value);
+                                            setPage(1);
+                                        }}
+                                        className="bg-background"
+                                    />
+                                    <Button size="icon" variant="ghost"><Search className="h-4 w-4" /></Button>
+                                </div>
 
-                        {/* Category Pills */}
-                        <div className="w-full overflow-x-auto min-w-0 pb-2">
-                            <CategoryPills
-                                categories={categories || []}
-                                selectedId={selectedCategory}
-                                onSelect={setSelectedCategory}
-                            />
+                                {/* Genre Dropdown */}
+                                <Select value={selectedCategory} onValueChange={(val) => {
+                                    setSelectedCategory(val);
+                                    setPage(1);
+                                }}>
+                                    <SelectTrigger className="w-[180px]">
+                                        <SelectValue placeholder="All Categories" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Categories</SelectItem>
+                                        {Array.isArray(categories) && categories.map((cat: any) => (
+                                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                     </div>
 
@@ -202,7 +221,32 @@ export default function DashboardPage() {
                                     <BookCard key={book.id} book={book} hideGenre={true} />
                                 ))}
                             </div>
-                            {books?.length === 0 && <p>No books found matching your criteria.</p>}
+                            {books?.length === 0 && <p className="text-center py-10 text-muted-foreground">No books found matching your criteria.</p>}
+
+                            {/* Pagination Controls */}
+                            {meta && (
+                                <div className="flex items-center justify-center gap-4 mt-8 py-4">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                        disabled={page === 1}
+                                    >
+                                        Previous
+                                    </Button>
+                                    <span className="text-sm font-medium">
+                                        Page {meta.page} of {meta.lastPage}
+                                    </span>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setPage((p) => p + 1)}
+                                        disabled={page >= meta.lastPage}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            )}
                         </>
                     )}
                 </div>

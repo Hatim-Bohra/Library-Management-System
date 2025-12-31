@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import {
@@ -19,13 +20,20 @@ import { InventoryDialog } from '@/components/books/inventory-dialog';
 import { ImportBookDialog } from '@/components/books/import-book-dialog';
 
 export default function AdminBooksPage() {
-    const { data: books, isLoading } = useQuery({
-        queryKey: ['admin-books'],
+    const [page, setPage] = useState(1);
+    const pageSize = 10;
+
+    const { data, isLoading } = useQuery({
+        queryKey: ['admin-books', page],
         queryFn: async () => {
-            const { data } = await api.get('/books', { params: { limit: 1000 } });
+            const { data } = await api.get('/books', { params: { page, limit: pageSize } });
             return data;
-        }
+        },
+        placeholderData: (previousData) => previousData,
     });
+
+    const books = data?.data || [];
+    const meta = data?.meta;
 
     if (isLoading) return <div>Loading books...</div>;
 
@@ -53,7 +61,7 @@ export default function AdminBooksPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {books?.map((book: any) => (
+                        {books.map((book: any) => (
                             <TableRow key={book.id}>
                                 <TableCell>
                                     {book.coverUrl ? (
@@ -85,6 +93,33 @@ export default function AdminBooksPage() {
                     </TableBody>
                 </Table>
             </div>
+
+            {/* Pagination Controls */}
+            {meta && (
+                <div className="flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                        Page {meta.page} of {meta.lastPage} ({meta.total} total books)
+                    </div>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                            disabled={page === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPage((p) => p + 1)}
+                            disabled={page >= meta.lastPage}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div >
     );
 }

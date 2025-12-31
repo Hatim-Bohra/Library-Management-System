@@ -213,7 +213,7 @@ export class BooksService {
     }
   }
 
-  findAll(query: GetBooksQueryDto) {
+  async findAll(query: GetBooksQueryDto) {
     const { q, categoryId, page = 1, limit = 10 } = query;
     const skip = (page - 1) * limit;
 
@@ -231,16 +231,28 @@ export class BooksService {
       where.categoryId = categoryId;
     }
 
-    return this.prisma.book.findMany({
-      skip,
-      take: Number(limit),
-      where,
-      include: {
-        author: true,
-        category: true,
-        inventoryItems: true,
+    const [total, data] = await Promise.all([
+      this.prisma.book.count({ where }),
+      this.prisma.book.findMany({
+        skip,
+        take: Number(limit),
+        where,
+        include: {
+          author: true,
+          category: true,
+          inventoryItems: true,
+        },
+      }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page: Number(page),
+        lastPage: Math.ceil(total / Number(limit)),
       },
-    });
+    };
   }
 
   async findOne(id: string): Promise<Book> {
