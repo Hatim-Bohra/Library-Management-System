@@ -20,6 +20,30 @@ export default function AdminAuditPage() {
         }
     });
 
+    const formatDetails = (log: any) => {
+        try {
+            const details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+            if (!details) return '-';
+
+            if (log.action === 'BOOK_OVERRIDE' && details.field === 'isAvailable') {
+                return `Manually changed availability from ${details.oldValue ? 'Available' : 'Unavailable'} to ${details.newValue ? 'Available' : 'Unavailable'}. Reason: ${details.reason}`;
+            }
+
+            // Generic fallback for other updates
+            if (details.field && details.oldValue !== undefined && details.newValue !== undefined) {
+                return `Changed ${details.field} from "${details.oldValue}" to "${details.newValue}"`;
+            }
+
+            // If it's just a reason string or object
+            if (details.reason) return `Reason: ${details.reason}`;
+
+            // Fallback to formatted JSON if structural
+            return JSON.stringify(details, null, 2);
+        } catch (e) {
+            return String(log.details);
+        }
+    };
+
     if (isLoading) return <div>Loading logs...</div>;
 
     return (
@@ -43,8 +67,8 @@ export default function AdminAuditPage() {
                                 <TableCell>{log.user?.email || log.performedBy}</TableCell>
                                 <TableCell>{log.action}</TableCell>
                                 <TableCell>{log.entityType} ({log.entityId})</TableCell>
-                                <TableCell className="max-w-xs truncate" title={JSON.stringify(log.details)}>
-                                    {JSON.stringify(log.details)}
+                                <TableCell className="max-w-md whitespace-pre-wrap text-sm">
+                                    {formatDetails(log)}
                                 </TableCell>
                             </TableRow>
                         ))}

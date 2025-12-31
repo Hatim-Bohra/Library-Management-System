@@ -71,6 +71,7 @@ export function InventoryDialog({ bookId, bookTitle, trigger }: InventoryDialogP
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['inventory', bookId] });
             queryClient.invalidateQueries({ queryKey: ['admin-books'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
             /* alert('Copy added'); */
         }
     });
@@ -82,6 +83,7 @@ export function InventoryDialog({ bookId, bookTitle, trigger }: InventoryDialogP
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['inventory', bookId] });
             queryClient.invalidateQueries({ queryKey: ['admin-books'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
         }
     });
 

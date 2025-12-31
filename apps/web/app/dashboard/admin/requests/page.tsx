@@ -84,6 +84,21 @@ export default function AdminRequestsPage() {
         onError: () => toast.error('Failed to fulfill request')
     });
 
+    // Group Requests by User
+    const groupedRequests = requests?.reduce((acc: any, req: any) => {
+        const userId = req.user.id;
+        if (!acc[userId]) {
+            acc[userId] = {
+                user: req.user,
+                items: []
+            };
+        }
+        acc[userId].items.push(req);
+        return acc;
+    }, {}) || {};
+
+    const groupedList: any[] = Object.values(groupedRequests);
+
     return (
         <div className="space-y-6">
             <h2 className="text-3xl font-bold tracking-tight">Manage Requests</h2>
@@ -97,90 +112,101 @@ export default function AdminRequestsPage() {
                 </TabsList>
 
                 <TabsContent value={activeTab} className="mt-6">
-                    <div className="rounded-md border">
+                    <div className="rounded-md border bg-card">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>User</TableHead>
-                                    <TableHead>Book</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
+                                    <TableHead className="w-[300px]">User</TableHead>
+                                    <TableHead>Requests List</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {isLoading ? (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="h-24 text-center">
+                                        <TableCell colSpan={2} className="h-24 text-center">
                                             Loading...
                                         </TableCell>
                                     </TableRow>
                                 ) : requests?.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="h-24 text-center">
+                                        <TableCell colSpan={2} className="h-24 text-center">
                                             No requests found.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    requests?.map((req: any) => (
-                                        <TableRow key={req.id}>
-                                            <TableCell>
+                                    groupedList.map((group: any) => (
+                                        <TableRow key={group.user.id} className="align-top">
+                                            {/* User Info - Sticky top? No need for simple table */}
+                                            <TableCell className="align-top py-4">
                                                 <div className="flex items-center gap-3">
-                                                    <Avatar className="h-8 w-8">
-                                                        <AvatarFallback>{req.user.firstName?.[0] || 'U'}</AvatarFallback>
+                                                    <Avatar className="h-10 w-10">
+                                                        <AvatarFallback>{group.user.firstName?.[0] || 'U'}</AvatarFallback>
                                                     </Avatar>
                                                     <div className="flex flex-col">
-                                                        <span className="font-medium">{req.user.firstName} {req.user.lastName}</span>
+                                                        <span className="font-medium text-base">{group.user.firstName} {group.user.lastName}</span>
                                                         <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                                            <Mail className="h-3 w-3" /> {req.user.email}
+                                                            <Mail className="h-3 w-3" /> {group.user.email}
                                                         </span>
+                                                        <Badge variant="outline" className="w-fit mt-2 text-[10px]">{group.items.length} Request(s)</Badge>
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium">{req.book.title}</span>
-                                                    <span className="text-xs text-muted-foreground">ISBN: {req.book.isbn}</span>
+
+                                            {/* Nested Requests List */}
+                                            <TableCell className="py-4">
+                                                <div className="flex flex-col gap-3">
+                                                    {group.items.map((req: any) => (
+                                                        <div key={req.id} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-3 rounded-lg border bg-muted/40 hover:bg-muted/60 transition-colors">
+                                                            {/* Book Info */}
+                                                            <div className="flex-1">
+                                                                <div className="font-medium">{req.book.title}</div>
+                                                                <div className="text-xs text-muted-foreground">ISBN: {req.book.isbn}</div>
+                                                            </div>
+
+                                                            {/* Badges */}
+                                                            <div className="flex items-center gap-2">
+                                                                <Badge variant="outline" className="whitespace-nowrap">{req.type}</Badge>
+                                                                <Badge
+                                                                    className="whitespace-nowrap"
+                                                                    variant={
+                                                                        req.status === 'PENDING' ? 'default' :
+                                                                            req.status === 'REJECTED' ? 'destructive' :
+                                                                                req.status === 'FULFILLED' ? 'secondary' : 'outline'
+                                                                    }
+                                                                >
+                                                                    {req.status}
+                                                                </Badge>
+                                                            </div>
+
+                                                            {/* Actions */}
+                                                            <div className="flex items-center gap-2 justify-end min-w-[150px]">
+                                                                {/* Pending Actions */}
+                                                                {req.status === 'PENDING' && (
+                                                                    <>
+                                                                        <Button size="sm" variant="ghost" className="h-8 text-destructive hover:text-destructive" onClick={() => rejectMutation.mutate(req.id)}>Reject</Button>
+                                                                        <Button size="sm" className="h-8" onClick={() => approveMutation.mutate(req.id)}>Approve</Button>
+                                                                    </>
+                                                                )}
+
+                                                                {/* Processing Actions */}
+                                                                {req.status === 'APPROVED' && req.type === 'DELIVERY' && (
+                                                                    <Button size="sm" onClick={() => dispatchMutation.mutate(req.id)}>Dispatch</Button>
+                                                                )}
+                                                                {req.status === 'APPROVED' && req.type === 'PICKUP' && (
+                                                                    <Button size="sm" onClick={() => fulfillMutation.mutate({ id: req.id, type: 'PICKUP' })}>Mark Collected</Button>
+                                                                )}
+                                                                {req.status === 'OUT_FOR_DELIVERY' && (
+                                                                    <Button size="sm" onClick={() => fulfillMutation.mutate({ id: req.id, type: 'DELIVERY' })}>Confirm Delivery</Button>
+                                                                )}
+
+                                                                {/* View Only for Completed/Rejected */}
+                                                                {(activeTab === 'completed' || activeTab === 'rejected') && (
+                                                                    <span className="text-xs text-muted-foreground italic">No actions</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline">{req.type}</Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge
-                                                    variant={
-                                                        req.status === 'PENDING' ? 'default' :
-                                                            req.status === 'REJECTED' ? 'destructive' :
-                                                                req.status === 'FULFILLED' ? 'secondary' : 'outline'
-                                                    }
-                                                >
-                                                    {req.status}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right space-x-2">
-                                                {/* Pending Actions */}
-                                                {req.status === 'PENDING' && (
-                                                    <>
-                                                        <Button size="sm" variant="outline" onClick={() => rejectMutation.mutate(req.id)}>Reject</Button>
-                                                        <Button size="sm" onClick={() => approveMutation.mutate(req.id)}>Approve</Button>
-                                                    </>
-                                                )}
-
-                                                {/* Processing Actions */}
-                                                {req.status === 'APPROVED' && req.type === 'DELIVERY' && (
-                                                    <Button size="sm" onClick={() => dispatchMutation.mutate(req.id)}>Dispatch</Button>
-                                                )}
-                                                {req.status === 'APPROVED' && req.type === 'PICKUP' && (
-                                                    <Button size="sm" onClick={() => fulfillMutation.mutate({ id: req.id, type: 'PICKUP' })}>Mark Collected</Button>
-                                                )}
-                                                {req.status === 'OUT_FOR_DELIVERY' && (
-                                                    <Button size="sm" onClick={() => fulfillMutation.mutate({ id: req.id, type: 'DELIVERY' })}>Confirm Delivery</Button>
-                                                )}
-
-                                                {/* View Only for Completed/Rejected */}
-                                                {(activeTab === 'completed' || activeTab === 'rejected') && (
-                                                    <span className="text-sm text-muted-foreground">No actions</span>
-                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))

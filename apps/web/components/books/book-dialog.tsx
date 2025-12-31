@@ -133,6 +133,7 @@ export function BookDialog({ initialData }: BookDialogProps) {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['books'] });
             queryClient.invalidateQueries({ queryKey: ['admin-books'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
             setOpen(false);
             if (!initialData) form.reset();
             toast.success(`Book ${initialData ? 'updated' : 'added'} successfully!`);
