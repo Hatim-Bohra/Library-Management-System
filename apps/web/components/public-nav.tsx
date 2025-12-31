@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Book, LayoutDashboard, User } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -14,7 +15,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function PublicNav() {
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, user, logout } = useAuth();
+    const pathname = usePathname();
+
+    const getRedirectPath = (target: string) => {
+        if (pathname === '/' || pathname.startsWith('/login') || pathname.startsWith('/register')) {
+            return target;
+        }
+        return `${target}?redirect=${encodeURIComponent(pathname)}`;
+    };
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -58,7 +67,7 @@ export function PublicNav() {
                                         <Link href="/dashboard/profile">Profile</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => window.location.href = '/login'}>
+                                    <DropdownMenuItem onClick={() => logout()}>
                                         Logout
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -66,10 +75,10 @@ export function PublicNav() {
                         ) : (
                             <>
                                 <Button variant="ghost" asChild>
-                                    <Link href="/login">Login</Link>
+                                    <Link href={getRedirectPath('/login')}>Login</Link>
                                 </Button>
                                 <Button asChild>
-                                    <Link href="/register">Get Started</Link>
+                                    <Link href={getRedirectPath('/register')}>Get Started</Link>
                                 </Button>
                             </>
                         )}

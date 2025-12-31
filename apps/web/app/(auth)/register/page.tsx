@@ -1,14 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useMutation } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
-
 
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { register } from '@/lib/auth';
+import { useAuth } from '@/components/providers/auth-provider';
 
 const formSchema = z.object({
     email: z.string().email(),
@@ -30,8 +30,12 @@ const formSchema = z.object({
     lastName: z.string().min(2),
 });
 
-export default function RegisterPage() {
+function RegisterForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const redirectUrl = searchParams.get('redirect') || searchParams.get('returnUrl');
+    const { login: authLogin } = useAuth();
+
     const [showPassword, setShowPassword] = useState(false);
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -45,8 +49,9 @@ export default function RegisterPage() {
 
     const mutation = useMutation({
         mutationFn: register,
-        onSuccess: () => {
-            router.push('/login');
+        onSuccess: (data) => {
+            // Auto login after successful registration
+            authLogin(data.access_token, data.refresh_token, false, redirectUrl || undefined);
         },
         onError: (error: any) => {
             console.error(error);
@@ -58,6 +63,8 @@ export default function RegisterPage() {
     function onSubmit(values: z.infer<typeof formSchema>) {
         mutation.mutate(values);
     }
+
+    const loginLink = redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl)}` : '/login';
 
     return (
         <Card>
@@ -140,9 +147,17 @@ export default function RegisterPage() {
             </CardContent>
             <CardFooter className="justify-center">
                 <p className="text-sm text-gray-500">
-                    Already have an account? <Link href="/login" className="text-blue-600 hover:underline">Login</Link>
+                    Already have an account? <Link href={loginLink} className="text-blue-600 hover:underline">Login</Link>
                 </p>
             </CardFooter>
         </Card>
+    );
+}
+
+export default function RegisterPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center p-8">Loading registration form...</div>}>
+            <RegisterForm />
+        </Suspense>
     );
 }
