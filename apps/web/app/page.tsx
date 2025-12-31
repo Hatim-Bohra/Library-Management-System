@@ -72,16 +72,18 @@ export default function Home() {
   });
 
 
+  const trendingData = trendingBooks?.data || [];
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <PublicNav />
 
       {/* 1. Feature Hero - Spotlight */}
       <div className="container mx-auto px-4 md:px-6 py-6 space-y-8">
-        <FeaturedHero book={trendingBooks?.[0]} />
+        <FeaturedHero book={trendingData?.[0]} />
 
         {/* 2. Trending Carousel - Social Proof */}
-        <BookCarousel title="Trending Now" books={trendingBooks || []} loading={!trendingBooks} />
+        <BookCarousel title="Trending Now" books={trendingData} loading={!trendingBooks} />
       </div>
 
       {/* 3. Main Catalog Section */}
